@@ -1,0 +1,6 @@
+# runtime data: database and customer photos
+data/*
+!data/.htaccess
+!data/uploads/
+data/uploads/*
+!data/uploads/.htaccess

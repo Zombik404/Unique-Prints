@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sizes &amp; prices — Unique prints aluminium prints</title>
+  <meta name="description" content="Five aluminium print sizes: A3, A4, A5, A6 and CR80, all on 0.5 mm plates.">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500&family=Kaushan+Script&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/styles.css">
+  <script src="assets/js/i18n.js"></script>
+  <script src="assets/js/app.js"></script>
+</head>
+<body data-page="prints">
+  <header id="site-header"></header>
+  <main class="container-site" style="padding-bottom:4rem">
+    <div class="page-head">
+      <p class="eyebrow text-primary" data-i18n="demo">Prices in EUR</p>
+      <h1 data-i18n="cat.title">All sizes</h1>
+      <p data-i18n="cat.sub"></p>
+    </div>
+    <div class="catalogue" id="catalogue"></div>
+  </main>
+  <footer id="site-footer"></footer>
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      const heroUrl = await UP.bgImage("hero");
+      const render = async () => {
+        const { sizes } = await UP.catalogue();
+        document.getElementById("catalogue").innerHTML = sizes.map((s) =>
+          '<article class="cat-row">' +
+            '<div class="frame"><div class="plate print-photo" style="width:' + (s.w > s.h ? "62%" : "40%") + ';aspect-ratio:' + s.w + "/" + s.h + ";" + (heroUrl ? "--print-image:url('" + heroUrl + "')" : "") + "\"></div></div>" +
+            "<div><h2>" + s.id + '</h2><p class="price">' + UP.formatEUR(s.price) + '</p><p class="meta">' + s.w + " × " + s.h + " mm · " + UP.t("cat.thickness") + "</p>" +
+              (s.id === "CR80" ? '<p class="desc">' + UP.t("cat.cr80") + "</p>" : "") + "</div>" +
+            '<div><a class="btn btn-md btn-outline" href="create.html?size=' + s.id + '">' + UP.t("cat.choose") + "</a></div>" +
+          "</article>").join("");
+      };
+      render();
+      document.addEventListener("up:lang", render);
+    });
+  </script>
+</body>
+</html>

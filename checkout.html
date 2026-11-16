@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Checkout — Unique prints</title>
+  <meta name="robots" content="noindex">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500&family=Kaushan+Script&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/styles.css">
+  <script src="assets/js/i18n.js"></script>
+  <script src="assets/js/app.js"></script>
+</head>
+<body data-page="checkout">
+  <header id="site-header"></header>
+  <main class="container-site">
+    <div class="page-head"><h1 data-i18n="co.title">Checkout</h1></div>
+    <form id="form" class="cart-layout" novalidate hidden>
+      <div class="stack" style="gap:1.5rem">
+        <section class="card stack">
+          <h2 data-i18n="co.contact">Contact details</h2>
+          <div class="field"><label for="name"><span data-i18n="co.name"></span> <span class="req">*</span></label><input class="input" id="name" name="name" autocomplete="name" maxlength="120" required></div>
+          <div class="grid-2">
+            <div class="field"><label for="email"><span data-i18n="co.email"></span> <span class="req">*</span></label><input class="input" id="email" name="email" type="email" autocomplete="email" maxlength="160" required></div>
+            <div class="field"><label for="phone"><span data-i18n="co.phone"></span> <span class="req">*</span></label><input class="input" id="phone" name="phone" type="tel" autocomplete="tel" maxlength="40" required></div>
+          </div>
+        </section>
+
+        <section class="card stack">
+          <h2 data-i18n="co.address">Delivery address</h2>
+          <div class="field"><label for="street"><span data-i18n="co.street"></span> <span class="req">*</span></label><input class="input" id="street" name="street" autocomplete="street-address" maxlength="200" required></div>
+          <div class="grid-2">
+            <div class="field"><label for="city"><span data-i18n="co.city"></span> <span class="req">*</span></label><input class="input" id="city" name="city" autocomplete="address-level2" maxlength="100" required></div>
+            <div class="field"><label for="postal"><span data-i18n="co.postal"></span> <span class="req">*</span></label><input class="input" id="postal" name="postal" autocomplete="postal-code" maxlength="20" required></div>
+          </div>
+          <div class="field"><label for="country"><span data-i18n="co.country"></span> <span class="req">*</span></label><select class="select" id="country" name="country" autocomplete="country" required></select></div>
+        </section>
+
+        <section class="card stack">
+          <h2 data-i18n="co.shippingTitle">Shipping</h2>
+          <div class="stack" style="gap:.5rem"><p class="small muted"><span data-i18n="co.carrier"></span> <span class="req text-primary">*</span></p><div class="seg" id="carriers"></div></div>
+          <div class="stack" style="gap:.5rem"><p class="small muted" data-i18n="co.delivery"></p>
+            <div class="seg" id="delivery">
+              <button type="button" data-d="home" class="active" data-i18n="co.home">Home delivery</button>
+              <button type="button" data-d="pickup" data-i18n="co.pickup">Pickup point</button>
+            </div>
+          </div>
+          <div class="grid-2" id="pickup-fields" hidden>
+            <div class="field"><label for="pickupName"><span data-i18n="co.pickupName"></span> <span class="req">*</span></label><input class="input" id="pickupName" name="pickupName" maxlength="160"></div>
+            <div class="field"><label for="pickupAddress"><span data-i18n="co.pickupAddress"></span> <span class="req">*</span></label><input class="input" id="pickupAddress" name="pickupAddress" maxlength="240"></div>
+          </div>
+          <div class="field"><label for="comment" data-i18n="co.comment"></label><textarea class="textarea" id="comment" name="comment" maxlength="1000"></textarea></div>
+          <p class="alert" data-i18n="co.shipNote"></p>
+        </section>
+      </div>
+
+      <aside class="card sticky stack">
+        <h2 data-i18n="cart.summary">Summary</h2>
+        <div id="summary"></div>
+        <p id="form-error" class="alert error" hidden></p>
+        <button type="submit" class="btn btn-lg btn-primary" id="submit" data-i18n="co.place">Place order</button>
+        <p class="muted xsmall relaxed" data-i18n="co.terms"></p>
+        <a class="btn-link" href="cart.html" data-i18n="co.back">Back to cart</a>
+      </aside>
+    </form>
+    <div id="empty" hidden style="padding:1.5rem 0 5rem"><p class="muted" data-i18n="cart.empty"></p><a class="btn btn-lg btn-primary" style="margin-top:1.5rem" href="create.html" data-i18n="cart.continue"></a></div>
+  </main>
+  <footer id="site-footer"></footer>
+  <script src="assets/js/checkout.js"></script>
+</body>
+</html>

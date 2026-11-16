@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Create your print — Unique prints</title>
+  <meta name="description" content="Upload a photo, choose an aluminium print size from A3 to CR80 and position your crop before you order.">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500&family=Kaushan+Script&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/styles.css">
+  <script src="assets/js/i18n.js"></script>
+  <script src="assets/js/app.js"></script>
+</head>
+<body data-page="create">
+  <header id="site-header"></header>
+  <main class="container-site">
+    <div class="page-head">
+      <p class="eyebrow text-primary" data-i18n="cr.eyebrow">Create your print</p>
+      <h1 data-i18n="cr.title">Your photo, made for metal.</h1>
+    </div>
+
+    <!-- step 1: choose a photo -->
+    <section id="pick" class="card" style="margin:2rem 0 4rem;max-width:44rem">
+      <h2 data-i18n="cr.choose">Choose a photo</h2>
+      <p class="muted small" style="margin-top:.35rem" data-i18n="cr.formats"></p>
+      <label id="dropzone" class="dropzone" style="margin-top:1.25rem">
+        <span data-icon="upload"></span>
+        <span class="btn btn-lg btn-primary" data-i18n="cr.upload">Upload photo</span>
+        <span class="muted small" data-i18n="cr.drop"></span>
+        <input id="file" type="file" accept="image/jpeg,image/png,image/webp" hidden>
+      </label>
+      <p id="pick-error" class="alert error" style="margin-top:1rem" hidden></p>
+      <p class="muted xsmall relaxed" style="margin-top:1rem" data-i18n="cr.privacy"></p>
+    </section>
+
+    <!-- step 2: studio -->
+    <section id="studio" class="studio" hidden>
+      <div>
+        <div class="seg side-tabs" id="side-tabs" hidden>
+          <button type="button" data-side="front" data-i18n="cr.front">Front side</button>
+          <button type="button" data-side="back" data-i18n="cr.back">Back side</button>
+        </div>
+        <div class="crop-wrap" id="crop-wrap">
+          <div class="crop-frame" id="frame" aria-label="Crop preview">
+            <img id="photo" alt="">
+            <div class="grid-lines"></div>
+            <div class="sheen"></div>
+          </div>
+          <label id="back-drop" class="dropzone back-drop" hidden>
+            <span data-icon="upload"></span>
+            <span class="btn btn-md btn-primary" data-i18n="cr.backUpload">Upload photo for the back</span>
+            <span class="muted xsmall" data-i18n="cr.formats"></span>
+            <input id="file-back" type="file" accept="image/jpeg,image/png,image/webp" hidden>
+          </label>
+        </div>
+        <p id="side-error" class="alert error" style="margin-top:.75rem" hidden></p>
+        <div id="crop-tools">
+          <div class="zoom-row">
+            <span class="small muted" data-i18n="cr.zoom">Zoom</span>
+            <input id="zoom" type="range" min="1" max="4" step="0.01" value="1" aria-label="Zoom">
+          </div>
+          <p class="muted xsmall" style="margin-top:.6rem" data-i18n="cr.cropHint"></p>
+          <div style="margin-top:1rem;display:flex;flex-wrap:wrap;gap:.75rem;align-items:center;justify-content:space-between">
+            <span class="muted xsmall" id="photo-info"></span>
+            <label class="btn btn-sm btn-ghost" style="cursor:pointer"><span data-i18n="cr.replace">Choose another photo</span><input id="file2" type="file" accept="image/jpeg,image/png,image/webp" hidden></label>
+          </div>
+        </div>
+
+        <div class="p3-card">
+          <div class="p3-head">
+            <p class="eyebrow text-primary" data-i18n="cr.3d">3D preview</p>
+            <div class="tools">
+              <button type="button" class="btn btn-sm btn-outline" id="p3-flip" data-i18n="cr.3dFlip">Turn over</button>
+              <button type="button" class="btn btn-sm btn-ghost" id="p3-reset" data-i18n="cr.3dReset">Reset</button>
+            </div>
+          </div>
+          <div class="p3-stage" id="p3-stage" tabindex="0" role="img" aria-label="3D preview"></div>
+          <p class="p3-hint"><span data-i18n="cr.3dHint">Drag to turn the plate.</span><span id="p3-dims"></span></p>
+        </div>
+      </div>
+
+      <div class="card stack">
+        <div class="stack" style="gap:.6rem">
+          <p class="eyebrow" data-i18n="cr.size">Size</p>
+          <div class="size-list" id="sizes"></div>
+        </div>
+        <div class="stack" style="gap:.6rem">
+          <p class="eyebrow" data-i18n="cr.orientation">Orientation</p>
+          <div class="seg" id="orient">
+            <button type="button" data-o="portrait" data-i18n="cr.portrait">Portrait</button>
+            <button type="button" data-o="landscape" data-i18n="cr.landscape">Landscape</button>
+          </div>
+        </div>
+        <div class="stack" style="gap:.6rem">
+          <p class="eyebrow" data-i18n="cr.backTitle">Second side</p>
+          <label class="back-toggle" for="back-on">
+            <input type="checkbox" id="back-on">
+            <span class="switch" aria-hidden="true"></span>
+            <span><span class="back-toggle-title" data-i18n="cr.backToggle">Print on the back too</span><br><span class="muted small" id="back-price"></span></span>
+          </label>
+          <p class="muted xsmall relaxed" data-i18n="cr.backHint"></p>
+        </div>
+        <div class="stack" style="gap:.6rem">
+          <p class="eyebrow" data-i18n="cr.quality">Print quality</p>
+          <div id="quality"></div>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:1rem;border-top:1px solid var(--border);padding-top:1.25rem">
+          <div class="stack" style="gap:.5rem">
+            <p class="eyebrow" data-i18n="cr.qty">Quantity</p>
+            <div class="qty"><button type="button" id="qminus" aria-label="−">−</button><input id="qty" type="number" min="1" max="50" value="1" inputmode="numeric"><button type="button" id="qplus" aria-label="+">+</button></div>
+          </div>
+          <div style="text-align:right"><p class="price-big" id="price">€0.00</p><p class="muted xsmall" id="price-note" style="margin-top:.35rem"></p></div>
+        </div>
+        <button type="button" class="btn btn-lg btn-primary" id="add"><span data-i18n="cr.add">Add to cart</span></button>
+        <p id="add-error" class="alert error" hidden></p>
+        <p class="muted xsmall relaxed" data-i18n="cr.note"></p>
+      </div>
+    </section>
+  </main>
+  <footer id="site-footer"></footer>
+  <script src="assets/js/plate3d.js"></script>
+  <script src="assets/js/create.js"></script>
+</body>
+</html>

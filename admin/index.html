@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Админ-панель — Unique prints</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500&family=Kaushan+Script&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/styles.css">
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container-site bar adm-bar">
+      <a href="#" class="logo" id="home-link"><span class="brand-mark"><span>Unique</span><span>prints</span></span></a>
+      <span class="adm-tag" data-t="panel">Админ-панель</span>
+      <div class="adm-actions" id="top-actions" hidden>
+        <button class="btn btn-sm btn-ghost" id="refresh" data-t="refresh">Обновить</button>
+        <a class="btn btn-sm btn-ghost" id="storage-btn" href="#storage" data-t="storage">Место на диске</a>
+        <a class="btn btn-sm btn-ghost" id="export" href="../api/admin.php?action=export" data-t="export">CSV</a>
+        <button class="btn btn-sm btn-outline" id="logout" data-t="logout">Выйти</button>
+      </div>
+      <div class="langs" style="border:0;padding:0"><button type="button" data-al="ru">RU</button><button type="button" data-al="en">EN</button></div>
+    </div>
+  </header>
+
+  <main>
+    <!-- login -->
+    <section id="login" class="container-site" hidden>
+      <form id="login-form" class="card stack adm-login">
+        <h2 data-t="loginTitle">Вход в админ-панель</h2>
+        <div class="field"><label for="pw" data-t="password">Пароль</label><input class="input" id="pw" type="password" autocomplete="current-password" required></div>
+        <p class="alert error" id="login-error" hidden></p>
+        <button class="btn btn-lg btn-primary" type="submit" data-t="signIn">Войти</button>
+        <p class="alert" id="not-configured" hidden data-t="notConfigured"></p>
+      </form>
+    </section>
+
+    <!-- app -->
+    <section id="app" class="container-site adm-app" hidden>
+      <div class="adm-list" id="list-pane">
+        <div class="adm-stats" id="stats"></div>
+        <div class="adm-toolbar">
+          <input class="input" id="q" type="search" autocomplete="off">
+        </div>
+        <div id="orders"></div>
+        <div class="adm-pager" id="pager"></div>
+      </div>
+      <div class="adm-detail" id="detail-pane"></div>
+    </section>
+  </main>
+
+  <div class="toast" id="up-toast" role="status"></div>
+  <script src="admin.js"></script>
+</body>
+</html>

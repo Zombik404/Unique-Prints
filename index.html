@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Unique prints — Personal aluminium photo prints</title>
+  <meta name="description" content="Your photos on 0.5 mm aluminium. Discover A3, A4, A5, A6 and pocket-sized CR80 prints.">
+  <meta property="og:title" content="Unique prints — Personal aluminium photo prints">
+  <meta property="og:description" content="Make your memories unique with aluminium photo prints, from A3 to CR80.">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="assets/img/og.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500&family=Kaushan+Script&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/styles.css">
+  <script src="assets/js/i18n.js"></script>
+  <script src="assets/js/app.js"></script>
+</head>
+<body data-page="home">
+  <header id="site-header"></header>
+  <main>
+    <!-- top of the home page: brand banner, then the headline under it -->
+    <section class="hero-banner">
+      <div class="banner-frame">
+        <img id="hero-img" alt="Unique Prints — night view of Budapest with the Liberty Statue" width="1280" height="533">
+      </div>
+      <div class="container-site hero-copy animate-rise">
+        <h1 class="visually-hidden">Unique prints</h1>
+        <p class="eyebrow text-primary" data-i18n="hero.eyebrow">Aluminium photo prints</p>
+        <h2 class="font-display" data-i18n="hero.title">Your photographs — with you, not just on a screen.</h2>
+        <p class="sub" data-i18n="hero.sub">Printed on 0.5 mm aluminium plates. Light and rigid, made to be looked at for a long time.</p>
+        <div class="cta-row">
+          <a class="btn btn-lg btn-primary" href="create.html"><span data-i18n="hero.cta">Create your print</span><span data-icon="arrow"></span></a>
+          <a class="btn btn-lg btn-outline" href="prints.html" data-i18n="hero.secondary">View sizes</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="border-y">
+      <div class="container-site benefits">
+        <div class="benefit"><span data-icon="layers"></span><div><h3 data-i18n="ben.1.t"></h3><p data-i18n="ben.1.d"></p></div></div>
+        <div class="benefit"><span data-icon="shield"></span><div><h3 data-i18n="ben.2.t"></h3><p data-i18n="ben.2.d"></p></div></div>
+        <div class="benefit"><span data-icon="palette"></span><div><h3 data-i18n="ben.3.t"></h3><p data-i18n="ben.3.d"></p></div></div>
+      </div>
+    </section>
+
+    <section class="container-site section">
+      <div class="section-head">
+        <h2 class="h-section" data-i18n="feat.title">Featured sizes</h2>
+        <a class="btn-link" href="prints.html"><span data-i18n="feat.all">All sizes</span><span data-icon="arrow"></span></a>
+      </div>
+      <div class="featured" id="featured"></div>
+    </section>
+
+    <!-- "Why aluminium" — updated text -->
+    <section class="border-t">
+      <div class="container-site why">
+        <img id="detail-img" alt="A phone photo library with thousands of photos" loading="lazy" width="1024" height="988">
+        <div>
+          <p class="eyebrow text-primary" data-i18n="ben.title">Why aluminium</p>
+          <h2 data-i18n="why.subtitle">Some memories deserve more than a place on a screen.</h2>
+          <p class="body" data-i18n="why.p1"></p>
+          <p class="body" data-i18n="why.p2"></p>
+        </div>
+      </div>
+    </section>
+
+    <section class="border-t cta-band">
+      <div class="container-site">
+        <p class="brand-script text-primary" style="font-size:1.5rem" data-i18n="brand.slogan">Be unique.</p>
+        <h2 data-i18n="cta.title">Ready to print?</h2>
+        <p class="sub" data-i18n="cta.sub"></p>
+        <a class="btn btn-lg btn-primary" style="margin-top:1.75rem" href="create.html"><span data-i18n="hero.cta">Create your print</span><span data-icon="arrow"></span></a>
+      </div>
+    </section>
+  </main>
+  <footer id="site-footer"></footer>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      document.querySelectorAll("[data-icon]").forEach((el) => { el.outerHTML = UP.ICONS[el.getAttribute("data-icon")]; });
+      UP.img("banner", document.getElementById("hero-img"));
+      UP.img("detail", document.getElementById("detail-img"));
+      const heroUrl = await UP.bgImage("hero");
+      const render = async () => {
+        const { sizes } = await UP.catalogue();
+        const featured = sizes.filter((s) => ["A3", "A4", "CR80"].includes(s.id));
+        document.getElementById("featured").innerHTML = featured.map((s) =>
+          '<a class="feat-card" href="create.html?size=' + s.id + '">' +
+            '<div class="frame"><div class="plate print-photo" style="width:' + (s.id === "CR80" ? "48%" : "34%") + ';aspect-ratio:' + s.w + "/" + s.h + ";" + (heroUrl ? "--print-image:url('" + heroUrl + "')" : "") + "\"></div></div>" +
+            '<div class="cap"><span>' + s.id + ' <span class="dims">· ' + s.w + " × " + s.h + ' mm</span></span><span class="text-primary">' + UP.formatEUR(s.price) + "</span></div>" +
+          "</a>").join("");
+      };
+      render();
+      document.addEventListener("up:lang", render);
+    });
+  </script>
+</body>
+</html>

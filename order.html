@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Your order — Unique prints</title>
+  <meta name="robots" content="noindex">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500&family=Kaushan+Script&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/styles.css">
+  <script src="assets/js/i18n.js"></script>
+  <script src="assets/js/app.js"></script>
+</head>
+<body data-page="order">
+  <header id="site-header"></header>
+  <main class="container-site"><div class="order-box" id="root"><p class="muted"><span class="spinner"></span></p></div></main>
+  <footer id="site-footer"></footer>
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      const root = document.getElementById("root");
+      const t = UP.t, esc = UP.esc;
+      const raw = decodeURIComponent(location.hash.slice(1));
+      const dot = raw.lastIndexOf(".");
+      const number = dot > 0 ? raw.slice(0, dot) : "", token = dot > 0 ? raw.slice(dot + 1) : "";
+      let order = null;
+      try {
+        const r = await fetch(UP.API + "?action=order_status", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ number, token }) });
+        if (r.ok) order = await r.json();
+      } catch (e) {}
+      const cat = await UP.catalogue();
+      const tg = (order && order.telegram) || cat.telegram || "UniqueOper";
+
+      function render() {
+        if (!order || !order.number) { root.innerHTML = '<p class="muted">' + t("ord.notFound") + '</p><a class="btn btn-lg btn-primary" style="margin-top:1.5rem" href="index.html">' + t("nav.home") + "</a>"; return; }
+        const tgText = encodeURIComponent(order.number);
+        root.innerHTML =
+          '<p class="eyebrow text-primary">' + t("ord.thanks") + "</p>" +
+          '<div class="card" style="margin-top:1.25rem">' +
+            '<p class="muted small">' + t("ord.number") + "</p>" +
+            '<div class="order-no"><code id="ono">' + esc(order.number) + '</code><button type="button" class="btn btn-sm btn-outline" id="copy">' + UP.ICONS.copy + " " + t("ord.copy") + "</button></div>" +
+            '<p style="margin-top:1rem"><span class="muted small">' + t("ord.status") + ':</span> <span class="status-pill">' + t("st." + order.status) + "</span></p>" +
+            '<p class="relaxed" style="margin-top:1.25rem">' + t("ord.send") + "</p>" +
+            '<a class="btn btn-lg tg-btn" style="margin-top:1.25rem" target="_blank" rel="noopener" href="https://t.me/' + encodeURIComponent(tg) + "?text=" + tgText + '">' + UP.ICONS.telegram + " " + t("ord.telegram") + " · @" + esc(tg) + "</a>" +
+          "</div>" +
+          '<div class="card" style="margin-top:1.25rem"><h2>' + t("ord.items") + "</h2>" +
+            '<div style="margin-top:1rem">' + order.items.map((i) =>
+              '<div class="summary-line" style="align-items:center"><span style="display:flex;gap:.75rem;align-items:center">' + (i.thumb ? '<img src="' + esc(i.thumb) + '" alt="" style="width:48px;height:48px;object-fit:contain;background:var(--secondary)">' : "") +
+              "<span>" + esc(i.size) + " × " + i.qty + (i.two_sided ? ' <span class="two-sided">' + t("cart.twoSided") + "</span>" : "") + "</span></span><span>" + UP.formatEUR(i.line_total) + "</span></div>").join("") + "</div>" +
+            '<div class="summary-line total"><span>' + t("ord.subtotal") + "</span><span>" + UP.formatEUR(order.subtotal) + "</span></div>" +
+            '<div class="summary-line"><span class="muted">' + t("ord.shipping") + " (" + esc(order.carrier) + ", " + t(order.delivery === "pickup" ? "co.pickup" : "co.home") + ')</span><span>' + (order.shipping_cost != null ? UP.formatEUR(order.shipping_cost) : '<span class="muted small">' + t("ord.tbd") + "</span>") + "</span></div>" +
+            (order.total != null ? '<div class="summary-line total"><span>' + t("ord.total") + "</span><span>" + UP.formatEUR(order.total) + "</span></div>" : "") +
+          "</div>" +
+          '<p class="muted xsmall" style="margin-top:1rem">' + t("ord.keep") + "</p>";
+        document.getElementById("copy").onclick = async () => {
+          try { await navigator.clipboard.writeText(order.number); UP.toast(t("ord.copied")); } catch (e) {}
+        };
+      }
+      render();
+      document.addEventListener("up:lang", render);
+    });
+  </script>
+</body>
+</html>
