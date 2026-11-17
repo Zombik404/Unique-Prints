@@ -13,10 +13,11 @@
   ];
 
   // Images: put your own files in assets/img/. If they are missing, the original ones are used.
+  // ?v=… makes browsers fetch a fresh copy after every update (deploy.sh sets it).
   const IMG = {
-    banner: ["assets/img/hero-banner.jpg"], // background of the big block at the top of the home page
+    banner: ["assets/img/hero-banner.jpg?v=20261117030000"], // background of the big block at the top of the home page
     hero: ["assets/img/hero.jpg", "https://uniqueprints.lovable.app/assets/unique-prints-hero-D92j5fPa.jpg"],
-    detail: ["assets/img/detail.webp"],
+    detail: ["assets/img/detail.webp?v=20261117030000"],
   };
 
   const ICONS = {

@@ -14,9 +14,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500&family=Kaushan+Script&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/styles.css">
-  <script src="assets/js/i18n.js"></script>
-  <script src="assets/js/app.js"></script>
+  <link rel="stylesheet" href="assets/css/styles.css?v=20261117030000">
+  <script src="assets/js/i18n.js?v=20261117030000"></script>
+  <script src="assets/js/app.js?v=20261117030000"></script>
 </head>
 <body data-page="home">
   <header id="site-header"></header>
@@ -91,7 +91,7 @@
         document.getElementById("featured").classList.toggle("four", featured.length > 3);
         document.getElementById("featured").innerHTML = featured.map((s) => s.type === "mug"
           ? '<a class="feat-card" href="create.html?size=' + s.id + '">' +
-              '<div class="frame">' + UP.mugArt("assets/img/hero-banner.jpg") + "</div>" +
+              '<div class="frame">' + UP.mugArt("assets/img/hero-banner.jpg?v=20261117030000") + "</div>" +
               '<div class="cap"><span>' + UP.t("mug.name") + ' <span class="dims">· ' + UP.t("mug.area", { w: s.w, h: s.h }) + '</span></span><span class="text-primary">' + UP.formatEUR(s.price) + "</span></div>" +
             "</a>"
           :

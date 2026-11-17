@@ -9,9 +9,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500&family=Kaushan+Script&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/styles.css">
-  <script src="assets/js/i18n.js"></script>
-  <script src="assets/js/app.js"></script>
+  <link rel="stylesheet" href="assets/css/styles.css?v=20261117030000">
+  <script src="assets/js/i18n.js?v=20261117030000"></script>
+  <script src="assets/js/app.js?v=20261117030000"></script>
 </head>
 <body data-page="prints">
   <header id="site-header"></header>
@@ -33,7 +33,7 @@
         document.getElementById("cur-note").textContent = cur === "EUR" ? UP.t("demo") : UP.t("demo.fx", { cur });
         document.getElementById("catalogue").innerHTML = sizes.map((s) => s.type === "mug"
           ? '<article class="cat-row">' +
-              '<div class="frame">' + UP.mugArt("assets/img/hero-banner.jpg") + "</div>" +
+              '<div class="frame">' + UP.mugArt("assets/img/hero-banner.jpg?v=20261117030000") + "</div>" +
               "<div><h2>" + UP.t("mug.name") + '</h2><p class="price">' + UP.formatEUR(s.price) + '</p><p class="meta">' + UP.t("mug.area", { w: s.w, h: s.h }) + " · " + UP.t("mug.vol") + "</p>" +
                 '<p class="desc">' + UP.t("mug.desc") + "</p></div>" +
               '<div><a class="btn btn-md btn-outline" href="create.html?size=' + s.id + '">' + UP.t("cat.choose") + "</a></div>" +

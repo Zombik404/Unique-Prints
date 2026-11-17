@@ -8,7 +8,8 @@
 #   2. copies the new site files over it, NEVER touching data/ (orders, photos, database)
 #   3. builds the new api/config.php, keeping the server's own settings from the old one
 #      (admin password, Telegram, e-mail, site address, data folder)
-#   4. checks PHP syntax, fixes permissions of data/, reloads the web server
+#   4. gives styles/scripts/pictures a new ?v= version so browsers don't show cached old files
+#   5. checks PHP syntax, fixes permissions of data/, reloads the web server
 # If anything fails, the site is restored from the backup automatically.
 set -euo pipefail
 
@@ -80,6 +81,11 @@ rsync -a --delete \
   --exclude '/data/' --exclude '/api/config.php' \
   --exclude '/.git/' --exclude '/.github/' --exclude '/deploy.sh' --exclude '/dev-router.php' --exclude '/Claude outputs/' \
   "$SRC/" "$DEST/"
+# new version number in the addresses of styles, scripts and pictures, so visitors' browsers
+# fetch the new files instead of showing old ones from their cache
+VER="$(date +%Y%m%d%H%M%S)"
+find "$DEST" -path "$DEST/data" -prune -o -type f \( -name '*.html' -o -path "$DEST/assets/js/app.js" \) -print0 \
+  | xargs -0 sed -i -E "s/\?v=[0-9]{8,14}/?v=$VER/g"
 install -m 640 -o root -g "$OWNER" "$NEWCFG" "$DEST/api/config.php"
 rm -f "$NEWCFG"
 # data/ keeps its contents; only make sure the protection files exist and the web server can write there
