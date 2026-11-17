@@ -47,7 +47,7 @@
           '<div class="card" style="margin-top:1.25rem"><h2>' + t("ord.items") + "</h2>" +
             '<div style="margin-top:1rem">' + order.items.map((i) =>
               '<div class="summary-line" style="align-items:center"><span style="display:flex;gap:.75rem;align-items:center">' + (i.thumb ? '<img src="' + esc(i.thumb) + '" alt="" style="width:48px;height:48px;object-fit:contain;background:var(--secondary)">' : "") +
-              "<span>" + esc(i.size) + " × " + i.qty + (i.two_sided ? ' <span class="two-sided">' + t("cart.twoSided") + "</span>" : "") + "</span></span><span>" + UP.formatEUR(i.line_total) + "</span></div>").join("") + "</div>" +
+              "<span>" + esc(UP.sizeName(i.size, cat)) + " × " + i.qty + (i.two_sided ? ' <span class="two-sided">' + t("cart.twoSided") + "</span>" : "") + "</span></span><span>" + UP.formatEUR(i.line_total) + "</span></div>").join("") + "</div>" +
             '<div class="summary-line total"><span>' + t("ord.subtotal") + "</span><span>" + UP.formatEUR(order.subtotal) + "</span></div>" +
             '<div class="summary-line"><span class="muted">' + t("ord.shipping") + " (" + esc(order.carrier) + ", " + t(order.delivery === "pickup" ? "co.pickup" : "co.home") + ')</span><span>' + (order.shipping_cost != null ? UP.formatEUR(order.shipping_cost) : '<span class="muted small">' + t("ord.tbd") + "</span>") + "</span></div>" +
             (order.total != null ? '<div class="summary-line total"><span>' + t("ord.total") + "</span><span>" + UP.formatEUR(order.total) + "</span></div>" : "") +

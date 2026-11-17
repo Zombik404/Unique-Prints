@@ -194,6 +194,7 @@ function price_sizes(): array
     $over = setting('prices');
     $out = [];
     foreach (cfg('sizes') as $s) {
+        $s['type'] = ($s['type'] ?? '') === 'mug' ? 'mug' : 'plate';
         $s['default_price'] = (float) $s['price'];
         if (is_array($over) && isset($over[$s['id']]) && is_numeric($over[$s['id']])) $s['price'] = (float) $over[$s['id']];
         $s['price'] = (float) $s['price'];
@@ -368,7 +369,7 @@ function make_print_file(array $photo, array $crop): ?string
 function notify_new_order(array $order, array $items): void
 {
     $lines = [];
-    foreach ($items as $it) $lines[] = '• ' . $it['size'] . ' × ' . $it['qty'] . (!empty($it['back']) ? ' (двусторонняя)' : '') . ' — €' . money((int) $it['line_cents']);
+    foreach ($items as $it) $lines[] = '• ' . ((sizes_by_id()[$it['size']]['type'] ?? '') === 'mug' ? 'Кружка ' . $it['size'] : $it['size']) . ' × ' . $it['qty'] . (!empty($it['back']) ? ' (двусторонняя)' : '') . ' — €' . money((int) $it['line_cents']);
     $site = rtrim((string) cfg('site_url'), '/');
     $text = "🆕 Новый заказ {$order['number']}\n"
         . "{$order['name']} · {$order['country']} · {$order['carrier']} (" . ($order['delivery'] === 'pickup' ? 'пункт выдачи' : 'домой') . ")\n"

@@ -262,7 +262,7 @@ function prices_out(): array
 {
     $fx = fx_rates();
     return [
-        'sizes' => array_map(fn($s) => ['id' => $s['id'], 'w' => $s['w'], 'h' => $s['h'], 'price' => $s['price'], 'default_price' => $s['default_price']], price_sizes()),
+        'sizes' => array_map(fn($s) => ['id' => $s['id'], 'type' => $s['type'], 'w' => $s['w'], 'h' => $s['h'], 'price' => $s['price'], 'default_price' => $s['default_price']], price_sizes()),
         'back_percent' => back_percent(),
         'back_default' => (float) (cfg('back_side_percent') ?? 50),
         'custom' => setting('prices') !== null || setting('back_percent') !== null,

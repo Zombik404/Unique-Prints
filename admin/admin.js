@@ -4,7 +4,7 @@
   const STATUSES = ["awaiting_quote", "awaiting_payment", "paid", "in_production", "shipped", "completed", "cancelled"];
   const L = {
     ru: {
-      prices: "Цены", prTitle: "Цены", prHint: "Цены вводятся в евро. Клиент оплачивает в евро, а на сайте видит цену в валюте своего языка по сегодняшнему курсу.",
+      prices: "Цены", prTitle: "Цены", mugName: "Кружка 330 мл (11 oz)", mugArea: "печать {w} × {h} мм", prHint: "Цены вводятся в евро. Клиент оплачивает в евро, а на сайте видит цену в валюте своего языка по сегодняшнему курсу.",
       prFormat: "Формат", prEUR: "Цена, €", prOnSite: "На сайте", prDefault: "в config.php: {p}", prBack: "Печать с обратной стороны, % от цены формата", prBackHint: "Например, 50 — оборот стоит половину цены формата.",
       prSave: "Сохранить цены", prSaved: "Цены сохранены. На сайте они обновятся в течение минуты.", prReset: "Вернуть цены из config.php", prResetQ: "Вернуть все цены и надбавку за оборот к значениям из config.php?",
       prResetDone: "Цены возвращены к config.php", prRates: "Курс", prRatesDate: "обновлён {d}", prCustom: "Цены изменены в админке {d}", prFromConfig: "Сейчас действуют цены из config.php",
@@ -56,7 +56,7 @@
       mailBody: "Hello {name},\n\nthank you for your order {no}.\n\nPrints: {prints}\nShipping ({carrier}): {ship}\nTotal: {total}\n\nPlease confirm, and we will send you the payment details. You can also message us on Telegram: https://t.me/{tg}\n\nUnique prints",
     },
     en: {
-      prices: "Prices", prTitle: "Prices", prHint: "Enter prices in euros. Customers pay in euros and see each price in their language's currency at today's rate.",
+      prices: "Prices", prTitle: "Prices", mugName: "Mug 330 ml (11 oz)", mugArea: "print {w} × {h} mm", prHint: "Enter prices in euros. Customers pay in euros and see each price in their language's currency at today's rate.",
       prFormat: "Format", prEUR: "Price, €", prOnSite: "On the site", prDefault: "config.php: {p}", prBack: "Back side printing, % of the format price", prBackHint: "For example, 50 means the back side costs half the format price.",
       prSave: "Save prices", prSaved: "Prices saved. The site shows them within a minute.", prReset: "Restore prices from config.php", prResetQ: "Restore all prices and the back side surcharge to the values in config.php?",
       prResetDone: "Prices restored from config.php", prRates: "Rate", prRatesDate: "updated {d}", prCustom: "Prices changed in the admin panel on {d}", prFromConfig: "Prices from config.php are in use",
@@ -120,6 +120,7 @@
 
   let csrf = "";
   let telegram = "UniqueOper";
+  let MUGS = new Set(); // size ids that are mugs (from the catalogue)
   const S = { q: "", status: "", page: 1, current: null, seen: Number(localStorage.getItem("up.admin.seen") || 0), lastMax: 0 };
 
   async function api(action, opts) {
@@ -280,7 +281,7 @@
             (i.has_thumb ? '<img src="' + API + "?action=photo&kind=thumb&item=" + i.id + '" alt="" style="' + (i.back ? "max-height:48px" : "") + '">' : "") +
             (i.back && i.back.has_thumb ? '<img src="' + API + "?action=photo&kind=thumb&side=back&item=" + i.id + '" alt="" style="max-height:48px">' : "") + "</div>";
           return '<div class="item">' + thumbs + "<div>" +
-            '<p style="font-weight:600">' + esc(i.size) + " · " + t(i.orientation) + " · " + i.qty + " × " + eur(i.unit) + ' = <span class="text-primary">' + eur(i.line) + "</span></p>" +
+            '<p style="font-weight:600">' + (MUGS.has(i.size) ? esc(t("mugName")) : esc(i.size) + " · " + t(i.orientation)) + " · " + i.qty + " × " + eur(i.unit) + ' = <span class="text-primary">' + eur(i.line) + "</span></p>" +
             (i.back ? '<p style="margin-top:.35rem"><span class="two-sided">' + t("twoSided") + "</span> <span class=\"muted small\">" + t("backSurcharge", { sum: eur(i.back.surcharge) }) + "</span></p>" : "") +
             sideInfo(i, false, i.back ? t("frontSide") : "") +
             (i.back ? sideInfo(i.back, true, t("backSide")) : "") +
@@ -423,7 +424,7 @@
           '<div class="pr-row pr-headrow"><span>' + t("prFormat") + "</span><span>" + t("prEUR") + "</span><span>" + t("prOnSite") + "</span></div>" +
           d.sizes.map((s) =>
             '<div class="pr-row">' +
-              '<label for="pr-' + esc(s.id) + '"><b>' + esc(s.id) + '</b><span class="muted xsmall" style="display:block">' + s.w + " × " + s.h + " mm</span></label>" +
+              '<label for="pr-' + esc(s.id) + '"><b>' + (s.type === "mug" ? esc(t("mugName")) : esc(s.id)) + '</b><span class="muted xsmall" style="display:block">' + (s.type === "mug" ? t("mugArea", { w: s.w, h: s.h }) : s.w + " × " + s.h + " mm") + "</span></label>" +
               '<div><input class="input pr-input" id="pr-' + esc(s.id) + '" data-size="' + esc(s.id) + '" type="number" inputmode="decimal" min="0.01" max="100000" step="0.01" value="' + Number(s.price).toFixed(2) + '">' +
                 '<span class="muted xsmall pr-def">' + t("prDefault", { p: eur(s.default_price) }) + "</span></div>" +
               '<div class="pr-conv" data-conv="' + esc(s.id) + '">' + onSite(s.price) + "</div>" +
@@ -464,7 +465,7 @@
   // ---------- start ----------
   async function start() {
     $("login").hidden = true; $("app").hidden = false; $("top-actions").hidden = false;
-    try { const c = await fetch("../api/index.php?action=catalogue").then((r) => r.json()); if (c.telegram) telegram = c.telegram; } catch (e) {}
+    try { const c = await fetch("../api/index.php?action=catalogue").then((r) => r.json()); if (c.telegram) telegram = c.telegram; MUGS = new Set((c.sizes || []).filter((s) => s.type === "mug").map((s) => s.id)); } catch (e) {}
     route();
     clearInterval(window.__poll);
     window.__poll = setInterval(() => { if (!document.hidden) loadList(); }, 60000);

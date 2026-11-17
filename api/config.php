@@ -34,6 +34,9 @@ return [
         ['id' => 'A5',   'w' => 148,  'h' => 210,   'price' => 20.00],
         ['id' => 'A6',   'w' => 105,  'h' => 148,   'price' => 15.00],
         ['id' => 'CR80', 'w' => 85.6, 'h' => 53.98, 'price' => 2.99],
+        // White ceramic mug 330 ml (11 oz). w × h is the print area: the picture wraps
+        // around the mug from one side of the handle to the other. No back side, no orientation choice.
+        ['id' => 'MUG11', 'type' => 'mug', 'w' => 230, 'h' => 90, 'price' => 19.00],
     ],
 
     // ── Display currency per site language ─────────────────────────────

@@ -334,3 +334,28 @@ button { cursor: pointer; }
 .hero-copy h2 { margin-top: .9rem; max-width: 40rem; font-size: clamp(2rem, 4.2vw, 2.9rem); line-height: 1.12; text-wrap: balance; }
 .hero-copy .sub { margin-top: 1rem; max-width: 34rem; font-size: .95rem; line-height: 1.7; color: var(--muted-foreground); }
 .hero-copy .cta-row { justify-content: center; }
+
+/* ---------- 3D mug ---------- */
+.m3-mug { position: absolute; left: 50%; top: 50%; width: 0; height: 0; transform-style: preserve-3d; will-change: transform; }
+.m3-face { position: absolute; left: 0; top: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; overflow: hidden; }
+.m3-strip { background: #f4f2ed; }
+.m3-print { position: absolute; background-color: #f4f2ed; background-repeat: no-repeat; }
+.m3-shade, .m3-spec { position: absolute; inset: 0; pointer-events: none; }
+.m3-shade { background: #1b1813; opacity: 0; }
+.m3-spec { background: #fff; opacity: 0; }
+.m3-inner { background: linear-gradient(180deg, #eeebe4 0%, #d6d1c7 55%, #a8a296 100%); }
+.m3-disc { position: absolute; left: 0; top: 0; border-radius: 50%; box-sizing: border-box; }
+.m3-floor { background: radial-gradient(circle at 45% 40%, #c9c3b8, #969084 75%); }
+.m3-rim { border-style: solid; border-color: #faf8f4; background: transparent; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .06); }
+.m3-handle, .m3-hseg { position: absolute; left: 0; top: 0; transform-style: preserve-3d; }
+.m3-hface { background: #f4f2ed; }
+.m3-shadow { position: absolute; left: 50%; height: 24px; transform: translateX(-50%); border-radius: 50%; pointer-events: none;
+  background: radial-gradient(closest-side, rgba(0, 0, 0, .55), transparent); }
+
+/* ---------- mug on the home page and the sizes page ---------- */
+@media (min-width: 640px) { .featured.four { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 1024px) { .featured.four { grid-template-columns: repeat(4, 1fr); } }
+.mug-art { width: 62%; max-width: 100%; height: auto; display: block; filter: drop-shadow(0 18px 22px rgba(0, 0, 0, .35)); }
+.feat-card .mug-art { transition: transform .5s; }
+.feat-card:hover .mug-art { transform: translateY(-.5rem); }
+.cat-row .mug-art { width: 70%; }

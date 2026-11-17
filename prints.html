@@ -31,7 +31,14 @@
         const { sizes } = await UP.catalogue();
         const cur = UP.currency();
         document.getElementById("cur-note").textContent = cur === "EUR" ? UP.t("demo") : UP.t("demo.fx", { cur });
-        document.getElementById("catalogue").innerHTML = sizes.map((s) =>
+        document.getElementById("catalogue").innerHTML = sizes.map((s) => s.type === "mug"
+          ? '<article class="cat-row">' +
+              '<div class="frame">' + UP.mugArt("assets/img/hero-banner.jpg") + "</div>" +
+              "<div><h2>" + UP.t("mug.name") + '</h2><p class="price">' + UP.formatEUR(s.price) + '</p><p class="meta">' + UP.t("mug.area", { w: s.w, h: s.h }) + " · " + UP.t("mug.vol") + "</p>" +
+                '<p class="desc">' + UP.t("mug.desc") + "</p></div>" +
+              '<div><a class="btn btn-md btn-outline" href="create.html?size=' + s.id + '">' + UP.t("cat.choose") + "</a></div>" +
+            "</article>"
+          :
           '<article class="cat-row">' +
             '<div class="frame"><div class="plate print-photo" style="width:' + (s.w > s.h ? "62%" : "40%") + ';aspect-ratio:' + s.w + "/" + s.h + ";" + (heroUrl ? "--print-image:url('" + heroUrl + "')" : "") + "\"></div></div>" +
             "<div><h2>" + s.id + '</h2><p class="price">' + UP.formatEUR(s.price) + '</p><p class="meta">' + s.w + " × " + s.h + " mm · " + UP.t("cat.thickness") + "</p>" +

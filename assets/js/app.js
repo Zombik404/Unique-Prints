@@ -196,6 +196,30 @@
 
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
 
+  // ---------- products ----------
+  function isMug(id, cat) { const s = cat && cat.sizes && cat.sizes.find((x) => x.id === id); return !!(s && s.type === "mug"); }
+  // what the customer calls an item: "A4" for plates, "Mug 330 ml (11 oz)" for the mug
+  function sizeName(id, cat) { return isMug(id, cat) ? t("mug.name") : id; }
+  // picture of a white mug with a sample print, for the home page and the sizes page
+  let mugArtN = 0;
+  function mugArt(printUrl) {
+    const n = ++mugArtN, g = "mug" + n;
+    return '<svg class="mug-art" viewBox="0 0 150 124" role="img" aria-label="' + esc(t("mug.name")) + '">' +
+      "<defs>" +
+        '<linearGradient id="' + g + 'b" x1="0" x2="1"><stop offset="0" stop-color="#b9b4aa"/><stop offset=".22" stop-color="#f6f4ef"/><stop offset=".55" stop-color="#ffffff"/><stop offset="1" stop-color="#a8a398"/></linearGradient>' +
+        '<linearGradient id="' + g + 's" x1="0" x2="1"><stop offset="0" stop-color="#000" stop-opacity=".45"/><stop offset=".25" stop-color="#000" stop-opacity="0"/><stop offset=".72" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".5"/></linearGradient>' +
+        '<clipPath id="' + g + 'c"><rect x="22" y="24" width="86" height="80"/></clipPath>' +
+      "</defs>" +
+      '<ellipse cx="65" cy="116" rx="50" ry="5" fill="#000" opacity=".35"/>' +
+      '<path d="M106 38 C140 36 142 92 106 92" fill="none" stroke="#d9d5cc" stroke-width="11" stroke-linecap="round"/>' +
+      '<path d="M106 38 C140 36 142 92 106 92" fill="none" stroke="#f4f2ed" stroke-width="7" stroke-linecap="round"/>' +
+      '<path d="M18 16 H112 V106 Q112 114 104 114 H26 Q18 114 18 106 Z" fill="url(#' + g + 'b)"/>' +
+      (printUrl ? '<image href="' + esc(printUrl) + '" x="22" y="24" width="86" height="80" preserveAspectRatio="xMidYMid slice" clip-path="url(#' + g + 'c)"/>' : "") +
+      '<path d="M18 16 H112 V106 Q112 114 104 114 H26 Q18 114 18 106 Z" fill="url(#' + g + 's)"/>' +
+      '<ellipse cx="65" cy="16" rx="47" ry="6" fill="#fbfaf7"/><ellipse cx="65" cy="16.6" rx="42.5" ry="4.3" fill="#cfc9be"/>' +
+    "</svg>";
+  }
+
   // plate size for a print preview, relative to the frame (%)
   function plateStyle(size, orientation, image) {
     let w = size.w, h = size.h;
@@ -206,7 +230,7 @@
     return "width:" + width + ";aspect-ratio:" + ratio + ";" + (image ? "--print-image:url('" + image + "')" : "");
   }
 
-  window.UP = { unitPrice, t, setLang, get lang() { return lang; }, applyI18n, formatEUR, formatPaid, isConverted, currency: displayCurrency, catalogue, getCart, saveCart, updateCartCount, ICONS, img, bgImage, toast, esc, plateStyle, API };
+  window.UP = { unitPrice, t, setLang, get lang() { return lang; }, applyI18n, isMug, sizeName, mugArt, formatEUR, formatPaid, isConverted, currency: displayCurrency, catalogue, getCart, saveCart, updateCartCount, ICONS, img, bgImage, toast, esc, plateStyle, API };
 
   document.documentElement.lang = lang;
   document.addEventListener("DOMContentLoaded", () => {

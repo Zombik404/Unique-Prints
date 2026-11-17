@@ -77,23 +77,30 @@
             </div>
           </div>
           <div class="p3-stage" id="p3-stage" tabindex="0" role="img" aria-label="3D preview"></div>
-          <p class="p3-hint"><span data-i18n="cr.3dHint">Drag to turn the plate.</span><span id="p3-dims"></span></p>
+          <p class="p3-hint"><span id="p3-hint" data-i18n="cr.3dHint">Drag to turn the plate.</span><span id="p3-dims"></span></p>
         </div>
       </div>
 
       <div class="card stack">
+        <div class="stack" style="gap:.6rem" id="product-block" hidden>
+          <p class="eyebrow" data-i18n="cr.product">Product</p>
+          <div class="seg" id="product">
+            <button type="button" data-p="plate" data-i18n="cr.prodPlate">Aluminium plate</button>
+            <button type="button" data-p="mug" data-i18n="cr.prodMug">Mug</button>
+          </div>
+        </div>
         <div class="stack" style="gap:.6rem">
           <p class="eyebrow" data-i18n="cr.size">Size</p>
           <div class="size-list" id="sizes"></div>
         </div>
-        <div class="stack" style="gap:.6rem">
+        <div class="stack" style="gap:.6rem" id="orient-block">
           <p class="eyebrow" data-i18n="cr.orientation">Orientation</p>
           <div class="seg" id="orient">
             <button type="button" data-o="portrait" data-i18n="cr.portrait">Portrait</button>
             <button type="button" data-o="landscape" data-i18n="cr.landscape">Landscape</button>
           </div>
         </div>
-        <div class="stack" style="gap:.6rem">
+        <div class="stack" style="gap:.6rem" id="back-block">
           <p class="eyebrow" data-i18n="cr.backTitle">Second side</p>
           <label class="back-toggle" for="back-on">
             <input type="checkbox" id="back-on">
@@ -121,6 +128,7 @@
   </main>
   <footer id="site-footer"></footer>
   <script src="assets/js/plate3d.js"></script>
+  <script src="assets/js/mug3d.js"></script>
   <script src="assets/js/create.js"></script>
 </body>
 </html>

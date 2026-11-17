@@ -22,7 +22,7 @@ try {
 
 function action_catalogue(): void
 {
-    $sizes = array_map(fn($s) => ['id' => $s['id'], 'w' => $s['w'], 'h' => $s['h'], 'price' => (float) $s['price']], price_sizes());
+    $sizes = array_map(fn($s) => ['id' => $s['id'], 'type' => $s['type'], 'w' => $s['w'], 'h' => $s['h'], 'price' => (float) $s['price']], price_sizes());
     header('Cache-Control: public, max-age=60');
     json_out([
         'sizes' => $sizes,
@@ -105,9 +105,11 @@ function action_order(): void
         if (!isset($sizes[$size])) fail('err.generic');
         $qty = (int) ($it['qty'] ?? 0);
         if ($qty < 1 || $qty > 50) fail('err.generic');
-        $orientation = ($it['orientation'] ?? '') === 'landscape' ? 'landscape' : 'portrait';
+        $isMug = $sizes[$size]['type'] === 'mug';
+        // a mug is always printed as one wide strip around it, and has no back side
+        $orientation = $isMug || ($it['orientation'] ?? '') === 'landscape' ? 'landscape' : 'portrait';
         $front = clean_side($it, $pdo);
-        $back = !empty($it['back']) && is_array($it['back']) ? clean_side($it['back'], $pdo) : null;
+        $back = !$isMug && !empty($it['back']) && is_array($it['back']) ? clean_side($it['back'], $pdo) : null;
 
         $base = (int) round($sizes[$size]['price'] * 100);
         $backCents = $back ? (int) round($base * back_percent() / 100) : 0;

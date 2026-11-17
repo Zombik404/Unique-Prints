@@ -85,9 +85,16 @@
       UP.img("detail", document.getElementById("detail-img"));
       const heroUrl = await UP.bgImage("hero");
       const render = async () => {
-        const { sizes } = await UP.catalogue();
-        const featured = sizes.filter((s) => ["A3", "A4", "CR80"].includes(s.id));
-        document.getElementById("featured").innerHTML = featured.map((s) =>
+        const cat = await UP.catalogue();
+        const { sizes } = cat;
+        const featured = sizes.filter((s) => ["A3", "A4", "CR80"].includes(s.id) || s.type === "mug");
+        document.getElementById("featured").classList.toggle("four", featured.length > 3);
+        document.getElementById("featured").innerHTML = featured.map((s) => s.type === "mug"
+          ? '<a class="feat-card" href="create.html?size=' + s.id + '">' +
+              '<div class="frame">' + UP.mugArt("assets/img/hero-banner.jpg") + "</div>" +
+              '<div class="cap"><span>' + UP.t("mug.name") + ' <span class="dims">· ' + UP.t("mug.area", { w: s.w, h: s.h }) + '</span></span><span class="text-primary">' + UP.formatEUR(s.price) + "</span></div>" +
+            "</a>"
+          :
           '<a class="feat-card" href="create.html?size=' + s.id + '">' +
             '<div class="frame"><div class="plate print-photo" style="width:' + (s.id === "CR80" ? "48%" : "34%") + ';aspect-ratio:' + s.w + "/" + s.h + ";" + (heroUrl ? "--print-image:url('" + heroUrl + "')" : "") + "\"></div></div>" +
             '<div class="cap"><span>' + s.id + ' <span class="dims">· ' + s.w + " × " + s.h + ' mm</span></span><span class="text-primary">' + UP.formatEUR(s.price) + "</span></div>" +

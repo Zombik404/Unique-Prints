@@ -12,15 +12,31 @@ document.addEventListener("DOMContentLoaded", async () => {
   const params = new URLSearchParams(location.search);
 
   const newSide = () => ({ file: null, url: null, iw: 0, ih: 0, zoom: 1, cx: 0.5, cy: 0.5, uploaded: null, img: null });
+  const typeOf = (id) => ((sizes.find((s) => s.id === id) || {}).type === "mug" ? "mug" : "plate");
+  const hasMug = sizes.some((s) => s.type === "mug");
   const S = {
     size: sizes.find((s) => s.id === params.get("size")) ? params.get("size") : "A4",
-    orientation: null, qty: 1, frameW: 0, frameH: 0,
+    orientation: null, qty: 1, frameW: 0, frameH: 0, lastPlate: "A4", plateOrientation: null,
     sides: { front: newSide(), back: newSide() }, active: "front", backOn: false,
   };
   const side = (k) => S.sides[k || S.active];
 
-  const p3 = window.UPPlate3D ? window.UPPlate3D.create($("p3-stage")) : null;
-  if (p3) { $("p3-flip").addEventListener("click", () => p3.flip()); $("p3-reset").addEventListener("click", () => p3.reset()); }
+  // 3D preview: the plate or the mug, swapped when the product changes
+  let p3 = null;
+  function ensure3d() {
+    const want = typeOf(S.size);
+    const mod = want === "mug" ? window.UPMug3D : window.UPPlate3D;
+    if (!mod || (p3 && p3.kind === want)) return;
+    let stage = $("p3-stage");
+    if (p3) { const fresh = stage.cloneNode(false); stage.replaceWith(fresh); stage = fresh; } // drops the old model and its listeners
+    p3 = mod.create(stage);
+    p3.kind = want;
+    const hint = $("p3-hint"), flip = $("p3-flip");
+    hint.setAttribute("data-i18n", want === "mug" ? "cr.3dHintMug" : "cr.3dHint"); hint.textContent = UP.t(hint.getAttribute("data-i18n"));
+    flip.setAttribute("data-i18n", want === "mug" ? "cr.3dTurn" : "cr.3dFlip"); flip.textContent = UP.t(flip.getAttribute("data-i18n"));
+  }
+  $("p3-flip").addEventListener("click", () => p3 && p3.flip());
+  $("p3-reset").addEventListener("click", () => p3 && p3.reset());
 
   const sizeById = (id) => sizes.find((s) => s.id === id);
   const cents = (n) => Math.round(n * 100);
@@ -34,6 +50,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     return { w, h };
   }
   function defaultOrientation(sizeId) {
+    if (typeOf(sizeId) === "mug") return "landscape"; // the picture wraps around the mug
     const f = side("front");
     if (sizeId === "CR80") return f.iw >= f.ih ? "landscape" : "portrait";
     return f.iw > f.ih ? "landscape" : "portrait";
@@ -111,9 +128,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     const empty = !sd.url;
     $("frame").hidden = empty; $("back-drop").hidden = !empty; $("crop-tools").hidden = empty;
     const d = printDims(S.size, S.orientation);
+    const mug = typeOf(S.size) === "mug";
+    $("product-block").hidden = !hasMug;
+    $("product").querySelectorAll("[data-p]").forEach((b) => b.classList.toggle("active", b.getAttribute("data-p") === (mug ? "mug" : "plate")));
+    $("orient-block").hidden = mug; $("back-block").hidden = mug;
+    ensure3d();
     if (p3) {
       p3.size(d.w, d.h, S.size + " · " + d.w + " × " + d.h + " mm · 0,5 mm");
-      $("p3-dims").textContent = S.size + " · " + d.w + " × " + d.h + " mm";
+      $("p3-dims").textContent = mug ? UP.t("mug.name") + " · " + UP.t("mug.area", { w: d.w, h: d.h }) : S.size + " · " + d.w + " × " + d.h + " mm";
     }
     if (!empty) {
       $("photo").src = sd.url;
@@ -196,10 +218,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   function renderPanel() {
     const f = side("front");
     if (!f.url) return;
-    $("sizes").innerHTML = sizes.map((s) => {
-      const q = qualityOf(dpiFor(f, s.id, S.orientation));
-      return '<button type="button" class="size-opt' + (s.id === S.size ? " active" : "") + '" data-size="' + s.id + '">' +
-        '<span class="id">' + s.id + '</span><span><span class="dims">' + s.w + " × " + s.h + " mm</span> " +
+    const prod = typeOf(S.size);
+    $("sizes").innerHTML = sizes.filter((s) => typeOf(s.id) === prod).map((s) => {
+      const isMug = prod === "mug";
+      const q = qualityOf(dpiFor(f, s.id, isMug ? "landscape" : S.orientation));
+      return '<button type="button" class="size-opt' + (isMug ? " size-mug" : "") + (s.id === S.size ? " active" : "") + '" data-size="' + s.id + '">' +
+        '<span class="id">' + (isMug ? UP.t("mug.short") : s.id) + '</span><span><span class="dims">' + (isMug ? UP.t("mug.area", { w: s.w, h: s.h }) : s.w + " × " + s.h + " mm") + "</span> " +
         '<span class="badge q-' + q + '" style="margin-left:.35rem">' + UP.t("q." + q) + "</span></span>" +
         '<span class="text-primary">' + UP.formatEUR(s.price) + "</span></button>";
     }).join("");
@@ -227,6 +251,23 @@ document.addEventListener("DOMContentLoaded", async () => {
       : "";
   }
   $("orient").querySelectorAll("[data-o]").forEach((b) => b.addEventListener("click", () => { S.orientation = b.getAttribute("data-o"); layout(); }));
+  // product: aluminium plate or mug
+  $("product").querySelectorAll("[data-p]").forEach((b) => b.addEventListener("click", () => {
+    const want = b.getAttribute("data-p");
+    if (want === typeOf(S.size)) return;
+    if (want === "mug") {
+      S.lastPlate = S.size; S.plateOrientation = S.orientation;
+      S.size = (sizes.find((s) => typeOf(s.id) === "mug") || {}).id;
+      S.orientation = "landscape";
+      S.backOn = false; $("back-on").checked = false; S.active = "front";
+    } else {
+      S.size = S.lastPlate || "A4";
+      S.orientation = S.plateOrientation || defaultOrientation(S.size);
+    }
+    $("add-error").hidden = true; $("side-error").hidden = true;
+    history.replaceState(null, "", "?size=" + S.size);
+    layout();
+  }));
   const setQty = (n) => { S.qty = Math.min(50, Math.max(1, Math.round(Number(n) || 1))); $("qty").value = S.qty; renderPanel(); };
   $("qminus").addEventListener("click", () => setQty(S.qty - 1));
   $("qplus").addEventListener("click", () => setQty(S.qty + 1));
