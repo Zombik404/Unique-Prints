@@ -9,6 +9,11 @@ DirectoryIndex index.html index.php
   Header always set Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=()"
   # browsers remember to use HTTPS only (sent only when the site is opened over HTTPS)
   Header always set Strict-Transport-Security "max-age=31536000" env=HTTPS
+  # only this site, Google Fonts and the fallback picture may be loaded; nothing may embed the site elsewhere
+  Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://uniqueprints.lovable.app; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'"
+  # don't tell everyone which PHP version runs the site
+  Header always unset X-Powered-By
+  Header unset X-Powered-By
 </IfModule>
 
 # Never serve notes, archives, databases, backups or hidden files (README.md, a stray .zip, .git, .user.ini ...)

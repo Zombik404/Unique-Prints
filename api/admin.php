@@ -6,6 +6,8 @@ define('UP_APP', true);
 require __DIR__ . '/lib.php';
 
 $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https');
+ini_set('session.use_strict_mode', '1');   // never accept a session id the server didn't create
+ini_set('session.use_only_cookies', '1');
 session_name('up_admin');
 session_set_cookie_params(['lifetime' => 0, 'path' => '/', 'secure' => $https, 'httponly' => true, 'samesite' => 'Strict']);
 session_start();

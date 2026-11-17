@@ -10,6 +10,7 @@
 #      (admin password, Telegram, e-mail, site address, data folder)
 #   4. gives styles/scripts/pictures a new ?v= version so browsers don't show cached old files
 #   5. checks PHP syntax, fixes permissions of data/, reloads the web server
+#   6. stores the admin password as a hash and sets up a nightly backup of data/ (14 days kept)
 # If anything fails, the site is restored from the backup automatically.
 set -euo pipefail
 
@@ -58,6 +59,15 @@ php -d display_errors=stderr -r '
   $old = include $oldFile;
   if (!is_array($old)) { fwrite(STDERR, "old config.php did not return settings\n"); exit(1); }
   $new = file_get_contents($newFile);
+  // the admin password is stored as a hash from now on: the same password keeps working,
+  // but nobody who reads config.php learns it
+  $pw = (string) ($old["admin_password"] ?? "");
+  $isHash = strpos($pw, chr(36) . "2y" . chr(36)) === 0 || strpos($pw, chr(36) . "argon2") === 0;
+  if ($pw !== "" && !$isHash) {
+    if (strlen($pw) < 10) { fwrite(STDERR, "admin password shorter than 10 characters\n"); exit(1); }
+    $old["admin_password"] = password_hash($pw, PASSWORD_DEFAULT);
+    fwrite(STDERR, "HASHED\n");
+  }
   // keep these from the server (secrets and server-specific values)
   foreach (["admin_password", "telegram_operator", "telegram_bot_token", "telegram_chat_id", "notify_email", "site_url"] as $k) {
     if (!array_key_exists($k, $old)) continue;
@@ -70,11 +80,14 @@ php -d display_errors=stderr -r '
     $new = preg_replace_callback("/(\x27data_dir\x27\s*=>\s*)[^,\n]+/", fn($m) => $m[1] . var_export(realpath($old["data_dir"]), true), $new, 1);
   }
   file_put_contents($out, $new);
-' "$DEST/api/config.php" "$SRC/api/config.php" "$NEWCFG"
+' "$DEST/api/config.php" "$SRC/api/config.php" "$NEWCFG" 2>"$NEWCFG.log" || { cat "$NEWCFG.log" >&2; false; }
+grep -q HASHED "$NEWCFG.log" && HASHED=1 || HASHED=""
+rm -f "$NEWCFG.log"
 php -l "$NEWCFG" >/dev/null
 php -r '$c = include $argv[1]; exit(strlen((string) $c["admin_password"]) >= 10 ? 0 : 1);' "$NEWCFG" \
   || die "The admin password from the old config.php is shorter than 10 characters — set a longer one in $DEST/api/config.php first."
 ok "config.php ready (password, Telegram, e-mail and site address kept)"
+[ -n "$HASHED" ] && ok "Admin password is now stored as a hash (log in with the same password as before)"
 
 say "Copying the new site files (data/ is not touched)"
 rsync -a --delete \
@@ -109,6 +122,24 @@ for svc in apache2 $(systemctl list-units --type=service --no-legend 'php*-fpm*'
   if systemctl is-active --quiet "$svc" 2>/dev/null; then systemctl reload "$svc" && reloaded="$reloaded $svc"; fi
 done
 ok "Reloaded:${reloaded:- nothing found (reload your web server yourself)}"
+
+say "Daily backup of orders and photos"
+cat > /etc/cron.daily/uniqueprints-backup <<CRON
+#!/bin/sh
+# Unique prints: daily copy of orders, photos and the database (data/). Keeps the last 14 days.
+set -e
+mkdir -p $BACKUP_DIR && chmod 700 $BACKUP_DIR
+rm -f "$BACKUP_DIR/shop-tmp.sqlite"
+# consistent copy of the database even while orders are coming in
+php -r '\$p = new PDO("sqlite:" . \$argv[1]); \$p->exec("VACUUM INTO " . \$p->quote(\$argv[2]));' "$DEST/data/shop.sqlite" "$BACKUP_DIR/shop-tmp.sqlite"
+tar -czf "$BACKUP_DIR/data-\$(date +%Y%m%d).tar.gz" -C "$DEST/data" --exclude=shop.sqlite --exclude='shop.sqlite-*' . -C "$BACKUP_DIR" shop-tmp.sqlite
+rm -f "$BACKUP_DIR/shop-tmp.sqlite"
+ls -1t $BACKUP_DIR/data-*.tar.gz 2>/dev/null | tail -n +15 | xargs -r rm -f
+CRON
+chmod 755 /etc/cron.daily/uniqueprints-backup
+# keep the last 10 update backups
+ls -1t "$BACKUP_DIR"/site-*.tar.gz 2>/dev/null | tail -n +11 | xargs -r rm -f
+ok "Orders and photos are copied every night to $BACKUP_DIR (last 14 days kept)"
 
 echo
 ok "Done. Open your site and the admin panel (/admin/) to check."
