@@ -341,8 +341,7 @@ button { cursor: pointer; }
 .m3-strip { background: #f4f2ed; }
 .m3-print { position: absolute; background-color: #f4f2ed; background-repeat: no-repeat; }
 .m3-shade, .m3-spec { position: absolute; inset: 0; pointer-events: none; }
-.m3-shade { background: #1b1813; opacity: 0; }
-.m3-spec { background: #fff; opacity: 0; }
+.m3-shade, .m3-spec { background-repeat: no-repeat; }
 .m3-inner { background: linear-gradient(180deg, #eeebe4 0%, #d6d1c7 55%, #a8a296 100%); }
 .m3-disc { position: absolute; left: 0; top: 0; border-radius: 50%; box-sizing: border-box; }
 .m3-floor { background: radial-gradient(circle at 45% 40%, #c9c3b8, #969084 75%); }
@@ -359,3 +358,4 @@ button { cursor: pointer; }
 .feat-card .mug-art { transition: transform .5s; }
 .feat-card:hover .mug-art { transform: translateY(-.5rem); }
 .cat-row .mug-art { width: 70%; }
+.m3-hface .m3-shade { background-color: #1b1813; opacity: 0; }

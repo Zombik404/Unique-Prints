@@ -6,8 +6,9 @@
   const HB = 95;         // height
   const WALL = 3.5;      // wall thickness, seen at the rim
   const FLOOR = 9;       // inside bottom sits this far above the base
-  const N = 90;          // facets around the body
-  const HANDLE = { up: 31, out: 27, width: 11, thick: 7.5, seg: 14 };
+  const N = 120;         // facets around the body (shaded smoothly, so they don't show as ribs)
+  const OV = 1;          // each facet overlaps its neighbours by this many px, so no seams show
+  const HANDLE = { up: 31, out: 27, width: 11, thick: 7.5, seg: 24 };
   const C = 2 * Math.PI * R;
   const LIGHT = -38;     // light comes from the front left (degrees around the mug)
   const reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -36,8 +37,10 @@
         const a = i * step - 180 + step / 2;          // centre angle of the facet, picture is centred at 0
         const s0 = ((a - step / 2 + printDeg / 2) / 360) * C, s1 = s0 + sw; // arc position along the picture (mm)
         const p0 = Math.max(0, s0), p1 = Math.min(st.printW, s1);
-        const pr = p1 > p0 ? '<div class="m3-print" data-p0="' + p0 + '" style="left:' + px(p0 - s0) + "px;width:" + (px(p1 - p0) + 1.6) + "px;top:" + px(top) + "px;height:" + px(st.printH) + 'px"></div>' : "";
-        html += '<div class="m3-face m3-strip" style="width:' + (px(sw) + 1.4) + "px;height:" + px(HB) + "px;margin-left:" + -(px(sw) + 1.4) / 2 + "px;margin-top:" + -px(HB) / 2 + "px;transform:rotateY(" + a + "deg) translateZ(" + px(R) + 'px)">' +
+        // the picture runs into the overlap on the sides where it continues on the next facet
+        const extL = p0 > s0 ? 0 : OV, extR = p1 < s1 ? 0 : OV;
+        const pr = p1 > p0 ? '<div class="m3-print" data-p0="' + p0 + '" data-ext="' + extL + '" style="left:' + (OV + px(p0 - s0) - extL) + "px;width:" + (px(p1 - p0) + extL + extR) + "px;top:" + px(top) + "px;height:" + px(st.printH) + 'px"></div>' : "";
+        html += '<div class="m3-face m3-strip" style="width:' + (px(sw) + 2 * OV) + "px;height:" + px(HB) + "px;margin-left:" + -(px(sw) / 2 + OV) + "px;margin-top:" + -px(HB) / 2 + "px;transform:rotateY(" + a + "deg) translateZ(" + px(R) + 'px)">' +
           pr + '<div class="m3-shade"></div><div class="m3-spec"></div></div>';
         st.strips.push(a);
       }
@@ -45,7 +48,7 @@
       const ri = R - WALL, swi = (2 * Math.PI * ri) / N, hi = HB - FLOOR;
       for (let i = 0; i < N; i++) {
         const a = i * step;
-        html += '<div class="m3-face m3-inner" style="width:' + (px(swi) + 0.8) + "px;height:" + px(hi) + "px;margin-left:" + -(px(swi) + 0.8) / 2 + "px;margin-top:" + -px(HB) / 2 + "px;transform:rotateY(" + a + "deg) translateZ(" + px(ri) + 'px) rotateY(180deg)"><div class="m3-shade"></div></div>';
+        html += '<div class="m3-face m3-inner" style="width:' + (px(swi) + 2 * OV) + "px;height:" + px(hi) + "px;margin-left:" + -(px(swi) / 2 + OV) + "px;margin-top:" + -px(HB) / 2 + "px;transform:rotateY(" + a + "deg) translateZ(" + px(ri) + 'px) rotateY(180deg)"><div class="m3-shade"></div></div>';
         st.inner.push(a);
       }
       // inside bottom and the rim (both face up)
@@ -64,7 +67,7 @@
         const a = pts[j], b = pts[j + 1];
         const zm = (a.z + b.z) / 2, ym = (a.y + b.y) / 2, dz = b.z - a.z, dy = b.y - a.y;
         const L = Math.hypot(dz, dy), phi = (Math.atan2(dz, dy) * 180) / Math.PI;
-        const W = HANDLE.width, T = HANDLE.thick, h = px(L) + 1.2;
+        const W = HANDLE.width, T = HANDLE.thick, h = px(L) + px(T) * 0.5 + 2; // long enough to close the wedge gaps on the outer curve
         const face = (w, tf, kind) => '<div class="m3-face m3-hface m3-h' + kind + '" style="width:' + px(w) + "px;height:" + h + "px;margin-left:" + -px(w) / 2 + "px;margin-top:" + -h / 2 + "px;transform:" + tf + '"><div class="m3-shade"></div></div>';
         html += '<div class="m3-hseg" style="transform:translateY(' + px(ym) + "px) translateZ(" + px(zm) + "px) rotateX(" + phi + 'deg)">' +
           face(W, "translateZ(" + px(T / 2) + "px)", "out") +
@@ -91,7 +94,7 @@
       const fullW = Pw / st.crop.w, fullH = Ph / st.crop.h;
       const ox = st.crop.x * fullW, oy = st.crop.y * fullH;
       mug.querySelectorAll(".m3-print").forEach((el) => {
-        const p0 = Number(el.dataset.p0) * k;
+        const p0 = Number(el.dataset.p0) * k - Number(el.dataset.ext);
         el.style.backgroundImage = "url('" + st.url + "')";
         el.style.backgroundSize = fullW + "px " + fullH + "px";
         el.style.backgroundPosition = -(ox + p0) + "px " + -oy + "px";
@@ -104,15 +107,25 @@
     function render() {
       mug.style.transform = "rotateX(" + st.rx + "deg) rotateY(" + st.ry + "deg)";
       const lit = (yaw) => Math.cos(rad(yaw - LIGHT));
+      const half = 180 / N;
+      // each facet gets a gradient from the tone at its left edge to the tone at its right edge,
+      // so neighbouring facets meet with the same tone and the body reads as one smooth curve
+      const shadeA = (yaw) => 0.5 * Math.pow(1 - Math.max(0, lit(yaw)), 1.3) + 0.04;
+      const specA = (yaw) => Math.pow(Math.max(0, Math.cos(rad(yaw + 14))), 40) * 0.2;
+      const grad = (rgb, a, b) => "linear-gradient(90deg,rgba(" + rgb + "," + a.toFixed(3) + "),rgba(" + rgb + "," + b.toFixed(3) + "))";
+      const set = (el, v) => { if (el.__bg !== v) { el.style.backgroundImage = v; el.__bg = v; } };
       if (st.stripEls) st.stripEls.forEach((el, i) => {
-        const yaw = st.strips[i] + st.ry, c = lit(yaw);
-        el.children[el.children.length - 2].style.opacity = (0.5 * (1 - Math.max(0, c)) ** 1.3 + 0.04).toFixed(3);
-        const sp = Math.max(0, Math.cos(rad(yaw + 14)));
-        el.lastChild.style.opacity = (Math.pow(sp, 40) * 0.2).toFixed(3);
+        const yaw = st.strips[i] + st.ry;
+        if (Math.cos(rad(yaw)) < -0.3) return; // facing away, hidden anyway
+        const n = el.children.length;
+        set(el.children[n - 2], grad("27,24,19", shadeA(yaw - half), shadeA(yaw + half)));
+        set(el.children[n - 1], grad("255,255,255", specA(yaw - half), specA(yaw + half)));
       });
+      const innerA = (yaw) => 0.18 + 0.32 * (1 - Math.max(0, lit(yaw)));
       if (st.innerEls) st.innerEls.forEach((el, i) => {
-        const yaw = st.inner[i] + 180 + st.ry, c = lit(yaw);
-        el.firstChild.style.opacity = (0.18 + 0.32 * (1 - Math.max(0, c))).toFixed(3);
+        const yaw = st.inner[i] + 180 + st.ry;
+        if (Math.cos(rad(yaw)) < -0.3) return;
+        set(el.firstChild, grad("27,24,19", innerA(yaw + half), innerA(yaw - half))); // turned around: left edge is the later angle
       });
       if (st.hEls) {
         const hy = st.handleAt + st.ry;
