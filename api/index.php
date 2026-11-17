@@ -51,6 +51,8 @@ function action_upload(): void
     if (!$info || $info[0] < 1 || $info[1] < 1) fail('err.read');
     $minLong = (int) (cfg('min_photo_long') ?: 1920); $minShort = (int) (cfg('min_photo_short') ?: 1080);
     if (max($info[0], $info[1]) < $minLong || min($info[0], $info[1]) < $minShort) fail('err.small');
+    // a small file can still unpack into a huge picture; above this size the print file can't be made
+    if ((int) $info[0] * (int) $info[1] > 110_000_000) fail('err.big');
 
     $id = rand_hex(12);
     $token = rand_hex(16);

@@ -5,6 +5,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const MAX_BYTES = 20 * 1024 * 1024;
   const MIN_LONG = 1920, MIN_SHORT = 1080; // minimum photo size in pixels (either orientation)
+  const MAX_PIXELS = 110e6; // larger images can't be processed for printing (same limit on the server)
   const TYPES = ["image/jpeg", "image/png", "image/webp"];
   const cat = await UP.catalogue();
   const sizes = cat.sizes;
@@ -68,6 +69,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const im = new Image();
     im.onload = () => {
       const w = im.naturalWidth, h = im.naturalHeight;
+      if (w * h > MAX_PIXELS) { URL.revokeObjectURL(url); return showError(errBox, UP.t("err.big")); }
       if (Math.max(w, h) < MIN_LONG || Math.min(w, h) < MIN_SHORT) {
         URL.revokeObjectURL(url);
         showError(errBox, UP.t("err.small", { w, h }));
@@ -234,6 +236,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }));
     $("orient").querySelectorAll("[data-o]").forEach((b) => b.classList.toggle("active", b.getAttribute("data-o") === S.orientation));
     $("back-price").textContent = UP.t("cr.backPrice", { price: UP.formatEUR(backCents(S.size) / 100) });
+    $("back-hint").textContent = UP.t("cr.backHint", { pct: String(Math.round(BACK_PERCENT * 100) / 100) });
 
     const qLine = (sd, label) => {
       const dpi = dpiFor(sd, S.size, S.orientation), q = qualityOf(dpi);

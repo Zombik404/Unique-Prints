@@ -72,6 +72,7 @@
     }
 
     function loop(now) {
+      if (!stage.isConnected) return; // the studio switched to another product
       if (st.anim) {
         const k = Math.min(1, (now - st.anim.t0) / st.anim.dur), e = 1 - Math.pow(1 - k, 3);
         st.rx = st.anim.fx + (st.anim.tx - st.anim.fx) * e; st.ry = st.anim.fy + (st.anim.ty - st.anim.fy) * e;
@@ -126,7 +127,7 @@
       else return;
       e.preventDefault();
     });
-    window.addEventListener("resize", () => { if (st.dims) size(st.dims.mmW, st.dims.mmH, st.dims.label); });
+    window.addEventListener("resize", () => { if (st.dims && stage.isConnected) size(st.dims.mmW, st.dims.mmH, st.dims.label); });
 
     render();
     requestAnimationFrame(loop);

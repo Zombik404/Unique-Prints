@@ -315,6 +315,10 @@ function cleanup_orphans(): void
         @unlink(data_dir() . '/' . $p['path']);
         $pdo->prepare('DELETE FROM photos WHERE id = ?')->execute([$p['id']]);
     }
+    // IP addresses are only kept for abuse protection: forget them after 30 days (GDPR data minimisation)
+    $old = time() - 30 * 86400;
+    $pdo->prepare('UPDATE orders SET ip = NULL WHERE ip IS NOT NULL AND created_at < ?')->execute([$old]);
+    $pdo->prepare('UPDATE photos SET ip = NULL WHERE ip IS NOT NULL AND created_at < ?')->execute([$old]);
 }
 
 // ---------- images ----------

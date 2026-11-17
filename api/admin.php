@@ -10,12 +10,17 @@ session_name('up_admin');
 session_set_cookie_params(['lifetime' => 0, 'path' => '/', 'secure' => $https, 'httponly' => true, 'samesite' => 'Strict']);
 session_start();
 
+const ADMIN_IDLE_SECONDS = 8 * 3600; // signed out after 8 hours without any activity
+
 $action = $_GET['action'] ?? '';
 
 try {
     if ($action === 'me') action_me();
     if ($action === 'login') action_login();
     require_admin();
+    // anything that changes data must be a POST (with the CSRF header checked in require_admin)
+    $changes = ['logout', 'status', 'quote', 'payment', 'note', 'delete', 'cleanup', 'purge_photos', 'save_prices'];
+    if (in_array($action, $changes, true) && $_SERVER['REQUEST_METHOD'] !== 'POST') fail('method', 405);
     switch ($action) {
         case 'logout': session_destroy(); json_out(['ok' => true]);
         case 'orders': action_orders(); break;
@@ -45,7 +50,8 @@ function password_configured(): bool { return strlen((string) cfg('admin_passwor
 function action_me(): void
 {
     if (empty($_SESSION['csrf'])) $_SESSION['csrf'] = rand_hex(16);
-    json_out(['auth' => !empty($_SESSION['admin']), 'configured' => password_configured(), 'csrf' => $_SESSION['csrf']]);
+    $active = !empty($_SESSION['admin']) && time() - (int) ($_SESSION['seen'] ?? 0) <= ADMIN_IDLE_SECONDS;
+    json_out(['auth' => $active, 'configured' => password_configured(), 'csrf' => $_SESSION['csrf']]);
 }
 
 function action_login(): void
@@ -60,13 +66,19 @@ function action_login(): void
     if (!$ok) { usleep(700000); fail('wrong_password', 401); }
     session_regenerate_id(true);
     $_SESSION['admin'] = true;
+    $_SESSION['seen'] = time();
     $_SESSION['csrf'] = rand_hex(16);
     json_out(['ok' => true, 'csrf' => $_SESSION['csrf']]);
 }
 
 function require_admin(): void
 {
+    if (!empty($_SESSION['admin']) && time() - (int) ($_SESSION['seen'] ?? 0) > ADMIN_IDLE_SECONDS) {
+        $_SESSION = [];
+        session_regenerate_id(true);
+    }
     if (empty($_SESSION['admin'])) fail('unauthorized', 401);
+    $_SESSION['seen'] = time();
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $h = (string) ($_SERVER['HTTP_X_CSRF'] ?? '');
         if ($h === '' || !hash_equals((string) ($_SESSION['csrf'] ?? ''), $h)) fail('csrf', 403);
@@ -110,8 +122,8 @@ function action_orders(): void
     $per = 40;
     $where = []; $args = [];
     if ($q !== '') {
-        $where[] = '(number LIKE ? OR name LIKE ? OR email LIKE ? OR phone LIKE ? OR city LIKE ?)';
-        $like = '%' . str_replace(['%', '_'], ['\%', '\_'], $q) . '%';
+        $where[] = "(number LIKE ? ESCAPE '\\' OR name LIKE ? ESCAPE '\\' OR email LIKE ? ESCAPE '\\' OR phone LIKE ? ESCAPE '\\' OR city LIKE ? ESCAPE '\\')";
+        $like = '%' . str_replace(['\\', '%', '_'], ['\\\\', '\%', '\_'], $q) . '%';
         array_push($args, $like, $like, $like, $like, $like);
     }
     if ($status === 'unpaid') { $where[] = "payment_status = 'unpaid' AND status != 'cancelled'"; }
