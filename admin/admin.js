@@ -4,6 +4,11 @@
   const STATUSES = ["awaiting_quote", "awaiting_payment", "paid", "in_production", "shipped", "completed", "cancelled"];
   const L = {
     ru: {
+      prices: "Цены", prTitle: "Цены", prHint: "Цены вводятся в евро. Клиент оплачивает в евро, а на сайте видит цену в валюте своего языка по сегодняшнему курсу.",
+      prFormat: "Формат", prEUR: "Цена, €", prOnSite: "На сайте", prDefault: "в config.php: {p}", prBack: "Печать с обратной стороны, % от цены формата", prBackHint: "Например, 50 — оборот стоит половину цены формата.",
+      prSave: "Сохранить цены", prSaved: "Цены сохранены. На сайте они обновятся в течение минуты.", prReset: "Вернуть цены из config.php", prResetQ: "Вернуть все цены и надбавку за оборот к значениям из config.php?",
+      prResetDone: "Цены возвращены к config.php", prRates: "Курс", prRatesDate: "обновлён {d}", prCustom: "Цены изменены в админке {d}", prFromConfig: "Сейчас действуют цены из config.php",
+      prEURnote: "в евро", bad_price: "Цена должна быть от 0,01 до 100 000 €.", bad_percent: "Надбавка за оборот должна быть от 0 до 1000 %.",
       storage: "Место на диске", stTitle: "Место на диске", stUsed: "Занято сайтом", stPhotos: "Оригиналы фото", stFiles: "{n} файлов",
       stThumbs: "Превью", stDb: "База заказов", stFree: "Свободно на диске", stUnknown: "хостинг не сообщает",
       stByStatus: "По статусам", stOrders: "заказов", stCleanTitle: "Очистка старых заказов",
@@ -51,6 +56,11 @@
       mailBody: "Hello {name},\n\nthank you for your order {no}.\n\nPrints: {prints}\nShipping ({carrier}): {ship}\nTotal: {total}\n\nPlease confirm, and we will send you the payment details. You can also message us on Telegram: https://t.me/{tg}\n\nUnique prints",
     },
     en: {
+      prices: "Prices", prTitle: "Prices", prHint: "Enter prices in euros. Customers pay in euros and see each price in their language's currency at today's rate.",
+      prFormat: "Format", prEUR: "Price, €", prOnSite: "On the site", prDefault: "config.php: {p}", prBack: "Back side printing, % of the format price", prBackHint: "For example, 50 means the back side costs half the format price.",
+      prSave: "Save prices", prSaved: "Prices saved. The site shows them within a minute.", prReset: "Restore prices from config.php", prResetQ: "Restore all prices and the back side surcharge to the values in config.php?",
+      prResetDone: "Prices restored from config.php", prRates: "Rate", prRatesDate: "updated {d}", prCustom: "Prices changed in the admin panel on {d}", prFromConfig: "Prices from config.php are in use",
+      prEURnote: "in euros", bad_price: "A price must be between €0.01 and €100,000.", bad_percent: "The back side surcharge must be between 0 and 1000 %.",
       storage: "Disk space", stTitle: "Disk space", stUsed: "Used by the site", stPhotos: "Original photos", stFiles: "{n} files",
       stThumbs: "Previews", stDb: "Order database", stFree: "Free on disk", stUnknown: "not reported by the host",
       stByStatus: "By status", stOrders: "orders", stCleanTitle: "Clean up old orders",
@@ -192,6 +202,7 @@
   function route() {
     const m = location.hash.match(/^#order\/(.+)$/);
     if (location.hash === "#storage") openStorage();
+    else if (location.hash === "#prices") openPrices();
     else if (m) openOrder(decodeURIComponent(m[1]));
     else { S.current = null; $("app").classList.remove("has-detail"); $("detail-pane").innerHTML = '<div class="empty-state card">' + t("selectOrder") + "</div>"; loadList(); }
   }
@@ -368,6 +379,86 @@
     };
     $("cl-photos").onclick = () => run("photos");
     $("cl-orders").onclick = () => run("orders");
+  }
+
+  // ---------- prices ----------
+  // Prices are entered in EUR; the shop converts them into each language's currency.
+  const LANG_LABEL = { en: "EN", hu: "HU", de: "DE", uk: "UA", ru: "RUS" };
+  const CUR_LOCALE = { USD: "en-US", HUF: "hu-HU", UAH: "uk-UA", RUB: "ru-RU", EUR: "de-DE" };
+  const CUR_WHOLE = { HUF: true, UAH: true, RUB: true };
+  function money(n, cur, digits) {
+    const d = digits != null ? digits : CUR_WHOLE[cur] ? 0 : 2;
+    try { return new Intl.NumberFormat(CUR_LOCALE[cur] || "en-US", { style: "currency", currency: cur, minimumFractionDigits: d, maximumFractionDigits: d }).format(n); }
+    catch (e) { return Number(n).toFixed(d) + " " + cur; }
+  }
+  async function openPrices() {
+    S.current = null;
+    $("app").classList.add("has-detail");
+    document.querySelectorAll(".ord").forEach((el) => el.classList.remove("active"));
+    let d;
+    try { d = await api("prices"); } catch (e) { $("detail-pane").innerHTML = '<div class="empty-state card">' + esc(errMsg(e)) + "</div>"; return; }
+    renderPrices(d);
+  }
+  function renderPrices(d) {
+    const rates = d.fx.rates || {};
+    // one entry per language whose currency can be converted (languages sharing a currency are listed together)
+    const curs = [];
+    Object.keys(d.fx.currencies).forEach((l) => {
+      const c = d.fx.currencies[l];
+      if (c === "EUR" || !(rates[c] > 0)) return;
+      const ex = curs.find((x) => x.cur === c);
+      if (ex) ex.langs.push(LANG_LABEL[l] || l); else curs.push({ cur: c, langs: [LANG_LABEL[l] || l] });
+    });
+    const onSite = (eurPrice) => curs.map((x) => '<span class="pr-cur"><span class="muted">' + x.langs.join("/") + "</span> " + money(eurPrice * rates[x.cur], x.cur) + "</span>").join("");
+    const ratesLine = curs.map((x) => "1 € = " + money(rates[x.cur], x.cur, 2)).join(" · ");
+    const when = (ts) => new Date(ts * 1000).toLocaleDateString(lang === "ru" ? "ru-RU" : "en-GB");
+    $("detail-pane").innerHTML =
+      '<button class="btn btn-sm btn-ghost" id="back" style="margin-bottom:.75rem">' + t("back") + "</button>" +
+      '<div class="d-head"><h2 class="font-display" style="font-size:2rem">' + t("prTitle") + "</h2>" +
+        '<span class="muted small">' + (d.custom && d.updated_at ? t("prCustom", { d: dt(d.updated_at) }) : t("prFromConfig")) + "</span></div>" +
+      '<form class="card" id="pr-form" novalidate>' +
+        '<p class="muted small relaxed">' + t("prHint") + "</p>" +
+        (ratesLine ? '<p class="small" style="margin-top:.6rem"><span class="muted">' + t("prRates") + ":</span> " + ratesLine + (d.fx.date ? ' <span class="muted xsmall">(' + t("prRatesDate", { d: when(d.fx.date) }) + ")</span>" : "") + "</p>" : "") +
+        '<div class="pr-table" style="margin-top:1.25rem">' +
+          '<div class="pr-row pr-headrow"><span>' + t("prFormat") + "</span><span>" + t("prEUR") + "</span><span>" + t("prOnSite") + "</span></div>" +
+          d.sizes.map((s) =>
+            '<div class="pr-row">' +
+              '<label for="pr-' + esc(s.id) + '"><b>' + esc(s.id) + '</b><span class="muted xsmall" style="display:block">' + s.w + " × " + s.h + " mm</span></label>" +
+              '<div><input class="input pr-input" id="pr-' + esc(s.id) + '" data-size="' + esc(s.id) + '" type="number" inputmode="decimal" min="0.01" max="100000" step="0.01" value="' + Number(s.price).toFixed(2) + '">' +
+                '<span class="muted xsmall pr-def">' + t("prDefault", { p: eur(s.default_price) }) + "</span></div>" +
+              '<div class="pr-conv" data-conv="' + esc(s.id) + '">' + onSite(s.price) + "</div>" +
+            "</div>").join("") +
+        "</div>" +
+        '<div class="field" style="margin-top:1.25rem;max-width:22rem"><label for="pr-back">' + t("prBack") + '</label>' +
+          '<input class="input" id="pr-back" type="number" inputmode="decimal" min="0" max="1000" step="1" value="' + d.back_percent + '">' +
+          '<span class="muted xsmall">' + t("prBackHint") + " " + t("prDefault", { p: d.back_default + " %" }) + "</span></div>" +
+        '<p class="alert error" id="pr-error" hidden style="margin-top:1rem"></p>' +
+        '<div class="row-actions"><button class="btn btn-md btn-primary" type="submit" id="pr-save">' + t("prSave") + "</button>" +
+          '<button class="btn btn-md btn-ghost" type="button" id="pr-reset"' + (d.custom ? "" : " disabled") + ">" + t("prReset") + "</button></div>" +
+      "</form>";
+    $("back").onclick = () => { location.hash = ""; };
+    $("detail-pane").querySelectorAll(".pr-input").forEach((inp) => inp.addEventListener("input", () => {
+      const v = Number(inp.value);
+      inp.classList.toggle("invalid", !(v >= 0.01 && v <= 100000));
+      $("detail-pane").querySelector('[data-conv="' + inp.dataset.size + '"]').innerHTML = v > 0 ? onSite(v) : "";
+    }));
+    $("pr-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      $("pr-error").hidden = true;
+      const prices = {};
+      let bad = false;
+      $("detail-pane").querySelectorAll(".pr-input").forEach((inp) => { const v = Number(inp.value); if (!(v >= 0.01 && v <= 100000)) { bad = true; inp.classList.add("invalid"); } prices[inp.dataset.size] = Math.round(v * 100) / 100; });
+      const bp = Number($("pr-back").value);
+      if (bad) { $("pr-error").textContent = t("bad_price"); $("pr-error").hidden = false; return; }
+      if ($("pr-back").value === "" || !(bp >= 0 && bp <= 1000)) { $("pr-error").textContent = t("bad_percent"); $("pr-error").hidden = false; return; }
+      $("pr-save").disabled = true;
+      try { renderPrices(await api("save_prices", { body: { prices, back_percent: bp } })); toast(t("prSaved")); }
+      catch (ex) { $("pr-error").textContent = errMsg(ex); $("pr-error").hidden = false; $("pr-save").disabled = false; }
+    });
+    $("pr-reset").onclick = async () => {
+      if (!confirm(t("prResetQ"))) return;
+      try { renderPrices(await api("save_prices", { body: { reset: true } })); toast(t("prResetDone")); } catch (ex) { toast(errMsg(ex)); }
+    };
   }
 
   // ---------- start ----------

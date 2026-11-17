@@ -22,13 +22,13 @@ try {
 
 function action_catalogue(): void
 {
-    $sizes = array_map(fn($s) => ['id' => $s['id'], 'w' => $s['w'], 'h' => $s['h'], 'price' => (float) $s['price']], cfg('sizes'));
-    header('Cache-Control: public, max-age=300');
+    $sizes = array_map(fn($s) => ['id' => $s['id'], 'w' => $s['w'], 'h' => $s['h'], 'price' => (float) $s['price']], price_sizes());
+    header('Cache-Control: public, max-age=60');
     json_out([
         'sizes' => $sizes,
         'currency' => cfg('currency'),
         'telegram' => cfg('telegram_operator'),
-        'backPercent' => (float) (cfg('back_side_percent') ?? 50),
+        'backPercent' => back_percent(),
         'shipping' => ['countries' => cfg('shipping')['countries'], 'defaultCarriers' => cfg('shipping')['defaultCarriers']],
         'fx' => (function () { $fx = fx_rates(); return ['base' => 'EUR', 'currencies' => display_currencies(), 'rates' => (object) $fx['rates'], 'date' => $fx['date']]; })(),
     ]);
@@ -110,7 +110,7 @@ function action_order(): void
         $back = !empty($it['back']) && is_array($it['back']) ? clean_side($it['back'], $pdo) : null;
 
         $base = (int) round($sizes[$size]['price'] * 100);
-        $backCents = $back ? (int) round($base * (float) (cfg('back_side_percent') ?? 50) / 100) : 0;
+        $backCents = $back ? (int) round($base * back_percent() / 100) : 0;
         $unit = $base + $backCents;
         $line = $unit * $qty;
         $subtotal += $line;

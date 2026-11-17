@@ -104,6 +104,11 @@ function migrate(PDO $pdo): void
         at INTEGER NOT NULL
     );
     CREATE INDEX IF NOT EXISTS hits_ip ON hits(ip, kind, at);
+    CREATE TABLE IF NOT EXISTS settings (
+        key TEXT PRIMARY KEY,
+        value TEXT NOT NULL,
+        updated_at INTEGER NOT NULL
+    );
     ");
     // two-sided printing (added later; older databases get the columns on first run)
     $have = array_column($pdo->query('PRAGMA table_info(order_items)')->fetchAll(), 'name');
@@ -161,10 +166,52 @@ function str_field($v, int $max, bool $required = true): ?string
     return $s;
 }
 
+// ---------- settings changed from the admin panel (stored in the database) ----------
+function setting(string $key)
+{
+    $st = db()->prepare('SELECT value FROM settings WHERE key = ?');
+    $st->execute([$key]);
+    $v = $st->fetchColumn();
+    return $v === false ? null : json_decode((string) $v, true);
+}
+function setting_time(string $key): ?int
+{
+    $st = db()->prepare('SELECT updated_at FROM settings WHERE key = ?');
+    $st->execute([$key]);
+    $v = $st->fetchColumn();
+    return $v === false ? null : (int) $v;
+}
+function set_setting(string $key, $value): void
+{
+    if ($value === null) { db()->prepare('DELETE FROM settings WHERE key = ?')->execute([$key]); return; }
+    db()->prepare('INSERT INTO settings (key, value, updated_at) VALUES (?, ?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at')
+        ->execute([$key, json_encode($value), time()]);
+}
+
+// Formats with their current price in EUR: the price set in the admin panel, or the one from config.php.
+function price_sizes(): array
+{
+    $over = setting('prices');
+    $out = [];
+    foreach (cfg('sizes') as $s) {
+        $s['default_price'] = (float) $s['price'];
+        if (is_array($over) && isset($over[$s['id']]) && is_numeric($over[$s['id']])) $s['price'] = (float) $over[$s['id']];
+        $s['price'] = (float) $s['price'];
+        $out[] = $s;
+    }
+    return $out;
+}
+// Surcharge for printing the back side, in percent of the format price.
+function back_percent(): float
+{
+    $v = setting('back_percent');
+    return is_numeric($v) ? (float) $v : (float) (cfg('back_side_percent') ?? 50);
+}
+
 function sizes_by_id(): array
 {
     $out = [];
-    foreach (cfg('sizes') as $s) $out[$s['id']] = $s;
+    foreach (price_sizes() as $s) $out[$s['id']] = $s;
     return $out;
 }
 

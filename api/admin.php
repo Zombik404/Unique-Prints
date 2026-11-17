@@ -30,6 +30,8 @@ try {
         case 'storage': action_storage(); break;
         case 'cleanup': action_cleanup(); break;
         case 'purge_photos': action_purge_photos(); break;
+        case 'prices': action_prices(); break;
+        case 'save_prices': action_save_prices(); break;
         default: fail('not_found', 404);
     }
 } catch (Throwable $e) {
@@ -252,6 +254,49 @@ function action_purge_photos(): void
     $freed = purge_order_photos((int) $o['id']);
     add_event((int) $o['id'], 'photos_deleted', 'Original photos removed, ' . round($freed / 1048576, 1) . ' MB freed');
     json_out(['ok' => true, 'freed' => $freed]);
+}
+
+// ---------- prices ----------
+// Prices are always in EUR. The shop shows them converted into each language's currency.
+function prices_out(): array
+{
+    $fx = fx_rates();
+    return [
+        'sizes' => array_map(fn($s) => ['id' => $s['id'], 'w' => $s['w'], 'h' => $s['h'], 'price' => $s['price'], 'default_price' => $s['default_price']], price_sizes()),
+        'back_percent' => back_percent(),
+        'back_default' => (float) (cfg('back_side_percent') ?? 50),
+        'custom' => setting('prices') !== null || setting('back_percent') !== null,
+        'updated_at' => max((int) setting_time('prices'), (int) setting_time('back_percent')) ?: null,
+        'fx' => ['currencies' => display_currencies(), 'rates' => (object) $fx['rates'], 'date' => $fx['date']],
+    ];
+}
+
+function action_prices(): void { json_out(prices_out()); }
+
+function action_save_prices(): void
+{
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') fail('method', 405);
+    $d = body_json(10000);
+    if (!empty($d['reset'])) {
+        set_setting('prices', null);
+        set_setting('back_percent', null);
+        json_out(prices_out());
+    }
+    $ids = array_column(cfg('sizes'), 'id');
+    $in = (array) ($d['prices'] ?? []);
+    $prices = [];
+    foreach ($ids as $id) {
+        $v = $in[$id] ?? null;
+        if (!is_numeric($v)) fail('bad_price');
+        $v = round((float) $v, 2);
+        if ($v < 0.01 || $v > 100000) fail('bad_price');
+        $prices[$id] = $v;
+    }
+    $bp = $d['back_percent'] ?? null;
+    if (!is_numeric($bp) || (float) $bp < 0 || (float) $bp > 1000) fail('bad_percent');
+    set_setting('prices', $prices);
+    set_setting('back_percent', round((float) $bp, 2));
+    json_out(prices_out());
 }
 
 // ---------- disk space ----------
