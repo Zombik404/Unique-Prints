@@ -90,6 +90,18 @@ client_max_body_size 30m;
 
 В `php.ini` выставьте `upload_max_filesize = 25M` и `post_max_size = 30M`.
 
+## 6½. Обновление сайта на своём сервере Ubuntu
+
+Сайт уже работает, нужно поставить новую версию. Подключитесь к серверу (в Windows: `cmd` → `ssh пользователь@адрес-сервера`) и выполните:
+
+```bash
+sudo apt update && sudo apt install -y git rsync php-curl
+git clone https://github.com/Zombik404/Unique-Prints.git ~/up-new     # в следующий раз: git -C ~/up-new pull
+sudo bash ~/up-new/deploy.sh /var/www/ПАПКА-САЙТА
+```
+
+`deploy.sh` делает резервную копию в `/root/uniqueprints-backups/`, заменяет файлы сайта, не трогая `data/` (заказы и фото), переносит из старого `config.php` пароль, Telegram, e-mail и адрес сайта, проверяет PHP и перезагружает веб-сервер. Если что-то пошло не так, сайт сам возвращается к прошлой версии.
+
 ## 7. Безопасность и резервные копии
 
 - Фото клиентов и база хранятся в `data/`. Доступ к этой папке из браузера закрыт. Для ещё большей надёжности папку можно перенести на уровень выше `public_html` и поменять путь `data_dir` в `config.php`.
