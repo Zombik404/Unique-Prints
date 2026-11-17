@@ -5,11 +5,11 @@
 
   // Fallback catalogue (the live prices always come from the server, api/config.php)
   const FALLBACK_SIZES = [
-    { id: "A3", w: 297, h: 420, price: 40.99 },
+    { id: "A3", w: 297, h: 420, price: 40.0 },
     { id: "A4", w: 210, h: 297, price: 29.0 },
-    { id: "A5", w: 148, h: 210, price: 21.0 },
+    { id: "A5", w: 148, h: 210, price: 20.0 },
     { id: "A6", w: 105, h: 148, price: 15.0 },
-    { id: "CR80", w: 85.6, h: 53.98, price: 5.0 },
+    { id: "CR80", w: 85.6, h: 53.98, price: 2.99 },
   ];
 
   // Images: put your own files in assets/img/. If they are missing, the original ones are used.
@@ -59,10 +59,36 @@
     (root || document).querySelectorAll("[data-i18n-placeholder]").forEach((el) => { el.placeholder = t(el.getAttribute("data-i18n-placeholder")); });
   }
 
+  // ---------- money ----------
+  // Prices live in EUR. Each language shows them converted at the server's daily rate
+  // (api/config.php → display_currencies). Orders and payment stay in EUR: use formatPaid for that.
+  const LOCALES = { en: "en-US", hu: "hu-HU", de: "de-DE", uk: "uk-UA", ru: "ru-RU" };
+  const WHOLE = { HUF: true, UAH: true, RUB: true }; // shown without cents
+  let FX = null; // { currencies: {lang: code}, rates: {code: 1 EUR = x}, date }
+  function displayCurrency() {
+    const c = FX && FX.currencies && FX.currencies[lang];
+    return c && c !== "EUR" && FX.rates && FX.rates[c] > 0 ? c : "EUR";
+  }
+  function fmt(n, cur, digits) {
+    const loc = cur === "EUR" ? (lang === "en" ? "en-IE" : LOCALES[lang] || lang) : LOCALES[lang] || "en-US";
+    try { return new Intl.NumberFormat(loc, { style: "currency", currency: cur, minimumFractionDigits: digits, maximumFractionDigits: digits }).format(Number(n)); }
+    catch (e) { return Number(n).toFixed(digits) + " " + cur; }
+  }
+  function formatPaid(n) { return fmt(n, "EUR", 2); }
   function formatEUR(n) {
-    const loc = lang === "en" ? "en-IE" : lang;
-    try { return new Intl.NumberFormat(loc, { style: "currency", currency: "EUR" }).format(Number(n)); }
-    catch (e) { return "€" + Number(n).toFixed(2); }
+    const c = displayCurrency();
+    if (c === "EUR") return formatPaid(n);
+    return fmt(Number(n) * FX.rates[c], c, WHOLE[c] ? 0 : 2);
+  }
+  function isConverted() { return displayCurrency() !== "EUR"; }
+  function renderFx() {
+    const c = displayCurrency();
+    let text = "", title = "";
+    if (c !== "EUR") {
+      text = "1 € = " + fmt(FX.rates[c], c, 2);
+      title = t("fx.title") + (FX.date ? " · " + new Date(FX.date * 1000).toLocaleDateString(LOCALES[lang] || lang) : "");
+    }
+    document.querySelectorAll("[data-fx]").forEach((el) => { el.textContent = text; el.title = title; el.hidden = !text; });
   }
 
   // ---------- catalogue ----------
@@ -72,7 +98,8 @@
       cataloguePromise = fetch(API + "?action=catalogue", { headers: { Accept: "application/json" } })
         .then((r) => (r.ok ? r.json() : Promise.reject()))
         .then((d) => (d && d.sizes && d.sizes.length ? d : { sizes: FALLBACK_SIZES, telegram: "UniqueOper", shipping: null, backPercent: 50 }))
-        .catch(() => ({ sizes: FALLBACK_SIZES, telegram: "UniqueOper", shipping: null, backPercent: 50 }));
+        .catch(() => ({ sizes: FALLBACK_SIZES, telegram: "UniqueOper", shipping: null, backPercent: 50 }))
+        .then((d) => { FX = d.fx || null; renderFx(); return d; });
     }
     return cataloguePromise;
   }
@@ -115,6 +142,7 @@
           link("index.html", "nav.home", "home") + link("prints.html", "nav.prints", "prints") + link("create.html", "nav.create", "create") +
           '<a href="cart.html" class="cart-link' + (p === "cart" || p === "checkout" ? " active" : "") + '" aria-label="' + t("nav.cart") + '">' + ICONS.bag +
             '<span class="cart-count" data-cart-count hidden>0</span></a>' +
+          '<span class="fx-rate" data-fx hidden></span>' +
           '<div class="langs" role="group" aria-label="Language">' +
             window.UP_LANGS.map((l) => '<button type="button" data-lang="' + l + '" class="' + (l === lang ? "active" : "") + '" aria-pressed="' + (l === lang) + '">' + window.UP_LANG_LABELS[l] + "</button>").join("") +
           "</div>" +
@@ -123,6 +151,8 @@
       '<nav class="mobile-nav" aria-label="Mobile">' + mlink("index.html", "nav.home", "home") + mlink("prints.html", "nav.prints", "prints") + mlink("create.html", "nav.create", "create") + mlink("cart.html", "nav.cart", "cart") + "</nav>";
     el.querySelectorAll("[data-lang]").forEach((b) => b.addEventListener("click", () => setLang(b.getAttribute("data-lang"))));
     updateCartCount();
+    renderFx();
+    catalogue();
   }
   function renderFooter() {
     const el = document.getElementById("site-footer");
@@ -176,7 +206,7 @@
     return "width:" + width + ";aspect-ratio:" + ratio + ";" + (image ? "--print-image:url('" + image + "')" : "");
   }
 
-  window.UP = { unitPrice, t, setLang, get lang() { return lang; }, applyI18n, formatEUR, catalogue, getCart, saveCart, updateCartCount, ICONS, img, bgImage, toast, esc, plateStyle, API };
+  window.UP = { unitPrice, t, setLang, get lang() { return lang; }, applyI18n, formatEUR, formatPaid, isConverted, currency: displayCurrency, catalogue, getCart, saveCart, updateCartCount, ICONS, img, bgImage, toast, esc, plateStyle, API };
 
   document.documentElement.lang = lang;
   document.addEventListener("DOMContentLoaded", () => {

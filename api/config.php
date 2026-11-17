@@ -29,12 +29,23 @@ return [
     // ── Prices (EUR) ────────────────────────────────────────────────────
     'currency' => 'EUR',
     'sizes' => [
-        ['id' => 'A3',   'w' => 297,  'h' => 420,   'price' => 40.99],
+        ['id' => 'A3',   'w' => 297,  'h' => 420,   'price' => 40.00],
         ['id' => 'A4',   'w' => 210,  'h' => 297,   'price' => 29.00],
-        ['id' => 'A5',   'w' => 148,  'h' => 210,   'price' => 21.00],
+        ['id' => 'A5',   'w' => 148,  'h' => 210,   'price' => 20.00],
         ['id' => 'A6',   'w' => 105,  'h' => 148,   'price' => 15.00],
-        ['id' => 'CR80', 'w' => 85.6, 'h' => 53.98, 'price' => 5.00],
+        ['id' => 'CR80', 'w' => 85.6, 'h' => 53.98, 'price' => 2.99],
     ],
+
+    // ── Display currency per site language ─────────────────────────────
+    // Prices are set and paid in EUR (above). Visitors see them converted into
+    // the currency of the language they picked; checkout also shows the EUR amount.
+    // Use 'EUR' for a language to show euros without conversion.
+    'display_currencies' => ['en' => 'USD', 'hu' => 'HUF', 'de' => 'EUR', 'uk' => 'UAH', 'ru' => 'RUB'],
+    // Exchange rates are fetched from this address once a day (free, no key needed)
+    // and kept in data/fx.json. If the address cannot be reached, the last saved
+    // rates are used, and if there are none yet, the rates below (1 EUR = ...).
+    'fx_url' => 'https://open.er-api.com/v6/latest/EUR',
+    'fx_fallback' => ['USD' => 1.10, 'HUF' => 365, 'UAH' => 50.2, 'RUB' => 91.1],
 
     // Printing on the back of the plate costs this percent of the format price (for the material used).
     'back_side_percent' => 50,

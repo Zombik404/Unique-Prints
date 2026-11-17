@@ -30,6 +30,7 @@ function action_catalogue(): void
         'telegram' => cfg('telegram_operator'),
         'backPercent' => (float) (cfg('back_side_percent') ?? 50),
         'shipping' => ['countries' => cfg('shipping')['countries'], 'defaultCarriers' => cfg('shipping')['defaultCarriers']],
+        'fx' => (function () { $fx = fx_rates(); return ['base' => 'EUR', 'currencies' => display_currencies(), 'rates' => (object) $fx['rates'], 'date' => $fx['date']]; })(),
     ]);
 }
 

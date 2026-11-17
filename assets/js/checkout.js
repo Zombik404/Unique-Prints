@@ -44,6 +44,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     $("summary").innerHTML =
       cart.map((i) => '<div class="summary-line"><span style="display:flex;gap:.6rem;align-items:center"><img src="' + esc(i.thumb) + '" alt="" style="width:36px;height:36px;object-fit:contain;background:var(--secondary)"><span>' + esc(i.size) + " × " + i.qty + (i.back ? ' <span class="two-sided">' + t("cart.twoSided") + "</span>" : "") + "</span></span><span>" + UP.formatEUR(price(i) * i.qty) + "</span></div>").join("") +
       '<div class="summary-line total"><span>' + t("cart.subtotal") + "</span><span>" + UP.formatEUR(subtotal) + "</span></div>" +
+      (UP.isConverted() ? '<div class="summary-line"><span class="muted small">' + t("fx.payEUR") + '</span><span class="small">' + UP.formatPaid(subtotal) + "</span></div>" : "") +
       '<div class="summary-line"><span class="muted">' + t("cart.shipping") + '</span><span class="muted small">' + t("cart.shippingTbd") + "</span></div>";
   }
 

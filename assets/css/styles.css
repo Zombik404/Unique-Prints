@@ -101,9 +101,12 @@ button { cursor: pointer; }
 .langs button { border: 0; background: transparent; color: var(--muted-foreground); font-size: .7rem; font-weight: 600; padding: .3rem .4rem; border-radius: 2px; }
 .langs button:hover { color: var(--foreground); }
 .langs button.active { background: var(--primary); color: var(--primary-foreground); }
+.fx-rate { font-size: .72rem; font-weight: 500; letter-spacing: .02em; color: var(--muted-foreground); white-space: nowrap; font-variant-numeric: tabular-nums; cursor: default; }
 .mobile-nav { display: none; }
 @media (max-width: 820px) {
   .nav .nav-text { display: none; }
+  .site-header .bar { position: relative; }
+  .nav .fx-rate { position: absolute; right: 1.25rem; bottom: .3rem; font-size: .62rem; line-height: 1; }
   .nav { gap: .75rem; }
   .langs { padding-left: .5rem; gap: 0; }
   .langs button { padding: .3rem .3rem; }

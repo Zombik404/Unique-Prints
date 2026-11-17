@@ -17,7 +17,7 @@
   <header id="site-header"></header>
   <main class="container-site" style="padding-bottom:4rem">
     <div class="page-head">
-      <p class="eyebrow text-primary" data-i18n="demo">Prices in EUR</p>
+      <p class="eyebrow text-primary" id="cur-note">&nbsp;</p>
       <h1 data-i18n="cat.title">All sizes</h1>
       <p data-i18n="cat.sub"></p>
     </div>
@@ -29,6 +29,8 @@
       const heroUrl = await UP.bgImage("hero");
       const render = async () => {
         const { sizes } = await UP.catalogue();
+        const cur = UP.currency();
+        document.getElementById("cur-note").textContent = cur === "EUR" ? UP.t("demo") : UP.t("demo.fx", { cur });
         document.getElementById("catalogue").innerHTML = sizes.map((s) =>
           '<article class="cat-row">' +
             '<div class="frame"><div class="plate print-photo" style="width:' + (s.w > s.h ? "62%" : "40%") + ';aspect-ratio:' + s.w + "/" + s.h + ";" + (heroUrl ? "--print-image:url('" + heroUrl + "')" : "") + "\"></div></div>" +

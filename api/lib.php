@@ -170,6 +170,73 @@ function sizes_by_id(): array
 
 function money(int $cents): string { return number_format($cents / 100, 2, '.', ''); }
 
+// ---------- exchange rates (display only; prices and payments stay in EUR) ----------
+
+// Which currency each site language shows.
+function display_currencies(): array
+{
+    $map = cfg('display_currencies');
+    return is_array($map) ? $map : ['en' => 'EUR', 'hu' => 'EUR', 'de' => 'EUR', 'uk' => 'EUR', 'ru' => 'EUR'];
+}
+
+// Rates as "1 EUR = x", refreshed at most once a day and cached in data/fx.json.
+// Never throws: on any failure it returns the last saved rates or the fallback from config.
+function fx_rates(): array
+{
+    $need = array_values(array_unique(array_filter(display_currencies(), fn($c) => $c !== 'EUR')));
+    $file = data_dir() . '/fx.json';
+    $cached = is_file($file) ? json_decode((string) @file_get_contents($file), true) : null;
+    if (!is_array($cached) || !is_array($cached['rates'] ?? null)) $cached = null;
+    $fresh_enough = $cached && ($cached['need'] ?? null) === $need && time() - (int) ($cached['checked'] ?? 0) < 86400;
+
+    if (!$fresh_enough) {
+        $lock = @fopen($file . '.lock', 'c');
+        if ($lock && flock($lock, LOCK_EX | LOCK_NB)) {
+            $fresh = fx_fetch($need);
+            if ($fresh) {
+                $cached = $fresh + ['need' => $need];
+            } else {
+                // source unreachable: keep what we have (or nothing, so the config fallback is used)
+                // and try again in an hour instead of on every page view
+                $cached = ['rates' => $cached['rates'] ?? [], 'date' => $cached['date'] ?? null, 'checked' => time() - 86400 + 3600, 'need' => $need];
+            }
+            $tmp = $file . '.tmp';
+            if (@file_put_contents($tmp, json_encode($cached)) !== false) @rename($tmp, $file);
+            flock($lock, LOCK_UN);
+        }
+        if ($lock) fclose($lock);
+    }
+
+    $rates = $cached['rates'] ?? [];
+    foreach ((array) cfg('fx_fallback') as $c => $r) if (!isset($rates[$c]) && is_numeric($r) && $r > 0) $rates[$c] = (float) $r;
+    return ['rates' => $rates, 'date' => $cached['date'] ?? null, 'checked' => $cached['checked'] ?? 0];
+}
+
+function fx_fetch(array $need): ?array
+{
+    $url = (string) cfg('fx_url');
+    if ($url === '' || !$need) return null;
+    $raw = false;
+    if (function_exists('curl_init')) {
+        $ch = curl_init($url);
+        curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 6, CURLOPT_CONNECTTIMEOUT => 4, CURLOPT_FOLLOWLOCATION => true]);
+        $raw = curl_exec($ch);
+        if (curl_getinfo($ch, CURLINFO_HTTP_CODE) !== 200) $raw = false;
+        curl_close($ch);
+    } else {
+        $raw = @file_get_contents($url, false, stream_context_create(['http' => ['timeout' => 6]]));
+    }
+    $d = $raw ? json_decode($raw, true) : null;
+    if (!is_array($d) || ($d['result'] ?? '') !== 'success' || !is_array($d['rates'] ?? null)) return null;
+    $rates = [];
+    foreach ($need as $c) {
+        $r = $d['rates'][$c] ?? null;
+        if (!is_numeric($r) || $r <= 0) return null;
+        $rates[$c] = (float) $r;
+    }
+    return ['rates' => $rates, 'date' => (int) ($d['time_last_update_unix'] ?? time()), 'checked' => time()];
+}
+
 function new_order_number(PDO $pdo): string
 {
     $alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';

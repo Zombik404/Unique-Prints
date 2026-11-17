@@ -51,6 +51,7 @@
             '<div class="summary-line total"><span>' + t("ord.subtotal") + "</span><span>" + UP.formatEUR(order.subtotal) + "</span></div>" +
             '<div class="summary-line"><span class="muted">' + t("ord.shipping") + " (" + esc(order.carrier) + ", " + t(order.delivery === "pickup" ? "co.pickup" : "co.home") + ')</span><span>' + (order.shipping_cost != null ? UP.formatEUR(order.shipping_cost) : '<span class="muted small">' + t("ord.tbd") + "</span>") + "</span></div>" +
             (order.total != null ? '<div class="summary-line total"><span>' + t("ord.total") + "</span><span>" + UP.formatEUR(order.total) + "</span></div>" : "") +
+            (UP.isConverted() ? '<div class="summary-line"><span class="muted small">' + t("fx.payEUR") + '</span><span class="small">' + UP.formatPaid(order.total != null ? order.total : order.subtotal) + "</span></div>" : "") +
           "</div>" +
           '<p class="muted xsmall" style="margin-top:1rem">' + t("ord.keep") + "</p>";
         document.getElementById("copy").onclick = async () => {
