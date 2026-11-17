@@ -91,10 +91,19 @@
     // drag to rotate
     let drag = null;
     stage.addEventListener("pointerdown", (e) => {
+      if (e.pointerType === "mouse" && e.button !== 0) return;
+      // stop the browser from starting a text selection or dragging selected text instead of turning the plate
+      e.preventDefault();
+      const sel = window.getSelection && window.getSelection();
+      if (sel && !sel.isCollapsed) sel.removeAllRanges();
+      stage.focus({ preventScroll: true }); // keep arrow keys working after a click
       st.idle = false; st.anim = null;
       drag = { x: e.clientX, y: e.clientY, lx: e.clientX, ly: e.clientY };
-      stage.setPointerCapture(e.pointerId); stage.classList.add("grabbing");
+      try { stage.setPointerCapture(e.pointerId); } catch (err) {}
+      stage.classList.add("grabbing");
     });
+    stage.addEventListener("dragstart", (e) => e.preventDefault());
+    stage.addEventListener("selectstart", (e) => e.preventDefault());
     stage.addEventListener("pointermove", (e) => {
       if (!drag) return;
       const dx = e.clientX - drag.lx, dy = e.clientY - drag.ly;
@@ -107,6 +116,7 @@
     const end = () => { drag = null; stage.classList.remove("grabbing"); };
     stage.addEventListener("pointerup", end);
     stage.addEventListener("pointercancel", end);
+    stage.addEventListener("lostpointercapture", end);
     stage.addEventListener("keydown", (e) => {
       const step = 15;
       if (e.key === "ArrowLeft") tween(st.rx, st.ry - step, 250);

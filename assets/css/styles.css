@@ -273,6 +273,8 @@ button { cursor: pointer; }
 .p3-stage { position: relative; height: 420px; perspective: 1100px; perspective-origin: 50% 40%; overflow: hidden; cursor: grab; touch-action: none; outline: none;
   background: radial-gradient(ellipse 70% 60% at 50% 42%, oklch(0.24 0.012 82), oklch(0.15 0.004 82) 70%); }
 .p3-stage.grabbing { cursor: grabbing; }
+.p3-stage, .p3-stage * { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-user-drag: none; }
+.p3-hint { -webkit-user-select: none; user-select: none; }
 .p3-stage:focus-visible { box-shadow: inset 0 0 0 2px var(--primary); }
 .p3-plate { position: absolute; left: 50%; top: 48%; transform-style: preserve-3d; will-change: transform; }
 .p3-face { position: absolute; left: 0; top: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; overflow: hidden; }
